@@ -1,0 +1,2 @@
+[Sun Aug 28 17:47:20.378609 2016] [:error] [pid 52684] [client 127.0.0.1:56456] script '/Users/VVinners/Desktop/scripts/motivation.localhost/index.php' not found or unable to stat
+[Sun Aug 28 18:20:26.417124 2016] [:error] [pid 52769] [client 127.0.0.1:52013] script '/Users/VVinners/Desktop/scripts/motivation.localhost/frontend/index.php' not found or unable to stat, referer: http://motivation.localhost/frontend/web/
