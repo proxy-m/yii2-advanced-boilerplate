@@ -36,7 +36,7 @@ return [
             'rules' => [
                 [
                     'class' => 'yii\rest\UrlRule',
-                    'controller' => 'v1/category',
+                    'controller' => ['v1/category', 'v1/post'],
                     'tokens' => [
                         '{id}' => '<id:\\w+>'
                     ],

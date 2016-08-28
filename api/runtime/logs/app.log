@@ -2676,3 +2676,209 @@ $_SERVER = [
     'REQUEST_TIME_FLOAT' => 1472385288.209
     'REQUEST_TIME' => 1472385288
 ]
+2016-08-28 16:32:21 [127.0.0.1][-][-][error][yii\web\HttpException:404] exception 'yii\web\NotFoundHttpException' with message 'Page not found.' in /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Request.php:189
+Stack trace:
+#0 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Application.php(78): yii\web\Request->resolve()
+#1 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/base/Application.php(375): yii\web\Application->handleRequest(Object(yii\web\Request))
+#2 /Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php(14): yii\base\Application->run()
+#3 {main}
+2016-08-28 16:32:21 [127.0.0.1][-][-][info][application] $_COOKIE = [
+    'advanced-frontend' => 'hre6r0c9u53mu1ltbthtqba1j2'
+    'advanced-backend' => 'gf8qpdoalmd491pc3l8vfan9i7'
+    '_csrf-backend' => '1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a:2:{i:0;s:13:\"_csrf-backend\";i:1;s:32:\"O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV\";}'
+    '_csrf-frontend' => 'f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a:2:{i:0;s:14:\"_csrf-frontend\";i:1;s:32:\"jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X\";}'
+]
+
+$_SERVER = [
+    'REDIRECT_UNIQUE_ID' => 'V8L19cCoOAEAAM4flWcAAAAI'
+    'REDIRECT_STATUS' => '200'
+    'UNIQUE_ID' => 'V8L19cCoOAEAAM4flWcAAAAI'
+    'HTTP_HOST' => 'motivation.localhost'
+    'HTTP_CONNECTION' => 'keep-alive'
+    'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    'HTTP_UPGRADE_INSECURE_REQUESTS' => '1'
+    'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36'
+    'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, sdch'
+    'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8,de;q=0.6,ja;q=0.4,ms;q=0.2,vi;q=0.2,zh-CN;q=0.2,zh;q=0.2,zh-TW;q=0.2,ru;q=0.2,id;q=0.2,fr;q=0.2'
+    'HTTP_COOKIE' => 'advanced-frontend=hre6r0c9u53mu1ltbthtqba1j2; advanced-backend=gf8qpdoalmd491pc3l8vfan9i7; _csrf-backend=1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a%3A2%3A%7Bi%3A0%3Bs%3A13%3A%22_csrf-backend%22%3Bi%3A1%3Bs%3A32%3A%22O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV%22%3B%7D; _csrf-frontend=f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X%22%3B%7D'
+    'PATH' => '/usr/bin:/bin:/usr/sbin:/sbin'
+    'DYLD_LIBRARY_PATH' => '/Applications/XAMPP/xamppfiles/lib:/Applications/XAMPP/xamppfiles/lib'
+    'SERVER_SIGNATURE' => ''
+    'SERVER_SOFTWARE' => 'Apache/2.4.17 (Unix) OpenSSL/1.0.1q PHP/5.6.15 mod_perl/2.0.8-dev Perl/v5.16.3'
+    'SERVER_NAME' => 'motivation.localhost'
+    'SERVER_ADDR' => '127.0.0.1'
+    'SERVER_PORT' => '80'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'REQUEST_SCHEME' => 'http'
+    'CONTEXT_PREFIX' => ''
+    'CONTEXT_DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'SERVER_ADMIN' => 'you@example.com'
+    'SCRIPT_FILENAME' => '/Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php'
+    'REMOTE_PORT' => '55396'
+    'REDIRECT_URL' => 'http://motivation.localhost/api/web/v1/posts'
+    'GATEWAY_INTERFACE' => 'CGI/1.1'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'REQUEST_METHOD' => 'GET'
+    'QUERY_STRING' => ''
+    'REQUEST_URI' => '/api/web/v1/posts'
+    'SCRIPT_NAME' => '/api/web/index.php'
+    'PHP_SELF' => '/api/web/index.php'
+    'REQUEST_TIME_FLOAT' => 1472394741.159
+    'REQUEST_TIME' => 1472394741
+]
+2016-08-28 16:32:21 [127.0.0.1][-][-][error][yii\web\HttpException:404] exception 'yii\web\NotFoundHttpException' with message 'Page not found.' in /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Request.php:189
+Stack trace:
+#0 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Application.php(78): yii\web\Request->resolve()
+#1 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/base/Application.php(375): yii\web\Application->handleRequest(Object(yii\web\Request))
+#2 /Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php(14): yii\base\Application->run()
+#3 {main}
+2016-08-28 16:32:21 [127.0.0.1][-][-][info][application] $_COOKIE = [
+    'advanced-frontend' => 'hre6r0c9u53mu1ltbthtqba1j2'
+    'advanced-backend' => 'gf8qpdoalmd491pc3l8vfan9i7'
+    '_csrf-backend' => '1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a:2:{i:0;s:13:\"_csrf-backend\";i:1;s:32:\"O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV\";}'
+    '_csrf-frontend' => 'f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a:2:{i:0;s:14:\"_csrf-frontend\";i:1;s:32:\"jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X\";}'
+]
+
+$_SERVER = [
+    'REDIRECT_UNIQUE_ID' => 'V8L19cCoOAEAAM4flWcAAAAI'
+    'REDIRECT_STATUS' => '200'
+    'UNIQUE_ID' => 'V8L19cCoOAEAAM4flWcAAAAI'
+    'HTTP_HOST' => 'motivation.localhost'
+    'HTTP_CONNECTION' => 'keep-alive'
+    'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    'HTTP_UPGRADE_INSECURE_REQUESTS' => '1'
+    'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36'
+    'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, sdch'
+    'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8,de;q=0.6,ja;q=0.4,ms;q=0.2,vi;q=0.2,zh-CN;q=0.2,zh;q=0.2,zh-TW;q=0.2,ru;q=0.2,id;q=0.2,fr;q=0.2'
+    'HTTP_COOKIE' => 'advanced-frontend=hre6r0c9u53mu1ltbthtqba1j2; advanced-backend=gf8qpdoalmd491pc3l8vfan9i7; _csrf-backend=1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a%3A2%3A%7Bi%3A0%3Bs%3A13%3A%22_csrf-backend%22%3Bi%3A1%3Bs%3A32%3A%22O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV%22%3B%7D; _csrf-frontend=f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X%22%3B%7D'
+    'PATH' => '/usr/bin:/bin:/usr/sbin:/sbin'
+    'DYLD_LIBRARY_PATH' => '/Applications/XAMPP/xamppfiles/lib:/Applications/XAMPP/xamppfiles/lib'
+    'SERVER_SIGNATURE' => ''
+    'SERVER_SOFTWARE' => 'Apache/2.4.17 (Unix) OpenSSL/1.0.1q PHP/5.6.15 mod_perl/2.0.8-dev Perl/v5.16.3'
+    'SERVER_NAME' => 'motivation.localhost'
+    'SERVER_ADDR' => '127.0.0.1'
+    'SERVER_PORT' => '80'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'REQUEST_SCHEME' => 'http'
+    'CONTEXT_PREFIX' => ''
+    'CONTEXT_DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'SERVER_ADMIN' => 'you@example.com'
+    'SCRIPT_FILENAME' => '/Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php'
+    'REMOTE_PORT' => '55396'
+    'REDIRECT_URL' => 'http://motivation.localhost/api/web/v1/posts'
+    'GATEWAY_INTERFACE' => 'CGI/1.1'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'REQUEST_METHOD' => 'GET'
+    'QUERY_STRING' => ''
+    'REQUEST_URI' => '/api/web/v1/posts'
+    'SCRIPT_NAME' => '/api/web/index.php'
+    'PHP_SELF' => '/api/web/index.php'
+    'REQUEST_TIME_FLOAT' => 1472394741.159
+    'REQUEST_TIME' => 1472394741
+]
+2016-08-28 16:33:31 [127.0.0.1][-][-][error][yii\web\HttpException:404] exception 'yii\web\NotFoundHttpException' with message 'Page not found.' in /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Request.php:189
+Stack trace:
+#0 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Application.php(78): yii\web\Request->resolve()
+#1 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/base/Application.php(375): yii\web\Application->handleRequest(Object(yii\web\Request))
+#2 /Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php(14): yii\base\Application->run()
+#3 {main}
+2016-08-28 16:33:31 [127.0.0.1][-][-][info][application] $_COOKIE = [
+    'advanced-frontend' => 'hre6r0c9u53mu1ltbthtqba1j2'
+    'advanced-backend' => 'gf8qpdoalmd491pc3l8vfan9i7'
+    '_csrf-backend' => '1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a:2:{i:0;s:13:\"_csrf-backend\";i:1;s:32:\"O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV\";}'
+    '_csrf-frontend' => 'f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a:2:{i:0;s:14:\"_csrf-frontend\";i:1;s:32:\"jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X\";}'
+]
+
+$_SERVER = [
+    'REDIRECT_UNIQUE_ID' => 'V8L2O8CoOAEAAOI9lokAAAAF'
+    'REDIRECT_STATUS' => '200'
+    'UNIQUE_ID' => 'V8L2O8CoOAEAAOI9lokAAAAF'
+    'HTTP_HOST' => 'motivation.localhost'
+    'HTTP_CONNECTION' => 'keep-alive'
+    'HTTP_CACHE_CONTROL' => 'max-age=0'
+    'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    'HTTP_UPGRADE_INSECURE_REQUESTS' => '1'
+    'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36'
+    'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, sdch'
+    'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8,de;q=0.6,ja;q=0.4,ms;q=0.2,vi;q=0.2,zh-CN;q=0.2,zh;q=0.2,zh-TW;q=0.2,ru;q=0.2,id;q=0.2,fr;q=0.2'
+    'HTTP_COOKIE' => 'advanced-frontend=hre6r0c9u53mu1ltbthtqba1j2; advanced-backend=gf8qpdoalmd491pc3l8vfan9i7; _csrf-backend=1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a%3A2%3A%7Bi%3A0%3Bs%3A13%3A%22_csrf-backend%22%3Bi%3A1%3Bs%3A32%3A%22O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV%22%3B%7D; _csrf-frontend=f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X%22%3B%7D'
+    'PATH' => '/usr/bin:/bin:/usr/sbin:/sbin'
+    'DYLD_LIBRARY_PATH' => '/Applications/XAMPP/xamppfiles/lib:/Applications/XAMPP/xamppfiles/lib'
+    'SERVER_SIGNATURE' => ''
+    'SERVER_SOFTWARE' => 'Apache/2.4.17 (Unix) OpenSSL/1.0.1q PHP/5.6.15 mod_perl/2.0.8-dev Perl/v5.16.3'
+    'SERVER_NAME' => 'motivation.localhost'
+    'SERVER_ADDR' => '127.0.0.1'
+    'SERVER_PORT' => '80'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'REQUEST_SCHEME' => 'http'
+    'CONTEXT_PREFIX' => ''
+    'CONTEXT_DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'SERVER_ADMIN' => 'you@example.com'
+    'SCRIPT_FILENAME' => '/Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php'
+    'REMOTE_PORT' => '59918'
+    'REDIRECT_URL' => 'http://motivation.localhost/api/web/v1/posts'
+    'GATEWAY_INTERFACE' => 'CGI/1.1'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'REQUEST_METHOD' => 'GET'
+    'QUERY_STRING' => ''
+    'REQUEST_URI' => '/api/web/v1/posts'
+    'SCRIPT_NAME' => '/api/web/index.php'
+    'PHP_SELF' => '/api/web/index.php'
+    'REQUEST_TIME_FLOAT' => 1472394811.467
+    'REQUEST_TIME' => 1472394811
+]
+2016-08-28 16:33:31 [127.0.0.1][-][-][error][yii\web\HttpException:404] exception 'yii\web\NotFoundHttpException' with message 'Page not found.' in /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Request.php:189
+Stack trace:
+#0 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/web/Application.php(78): yii\web\Request->resolve()
+#1 /Users/VVinners/Desktop/scripts/motivation.localhost/vendor/yiisoft/yii2/base/Application.php(375): yii\web\Application->handleRequest(Object(yii\web\Request))
+#2 /Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php(14): yii\base\Application->run()
+#3 {main}
+2016-08-28 16:33:31 [127.0.0.1][-][-][info][application] $_COOKIE = [
+    'advanced-frontend' => 'hre6r0c9u53mu1ltbthtqba1j2'
+    'advanced-backend' => 'gf8qpdoalmd491pc3l8vfan9i7'
+    '_csrf-backend' => '1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a:2:{i:0;s:13:\"_csrf-backend\";i:1;s:32:\"O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV\";}'
+    '_csrf-frontend' => 'f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a:2:{i:0;s:14:\"_csrf-frontend\";i:1;s:32:\"jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X\";}'
+]
+
+$_SERVER = [
+    'REDIRECT_UNIQUE_ID' => 'V8L2O8CoOAEAAOI9lokAAAAF'
+    'REDIRECT_STATUS' => '200'
+    'UNIQUE_ID' => 'V8L2O8CoOAEAAOI9lokAAAAF'
+    'HTTP_HOST' => 'motivation.localhost'
+    'HTTP_CONNECTION' => 'keep-alive'
+    'HTTP_CACHE_CONTROL' => 'max-age=0'
+    'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    'HTTP_UPGRADE_INSECURE_REQUESTS' => '1'
+    'HTTP_USER_AGENT' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36'
+    'HTTP_ACCEPT_ENCODING' => 'gzip, deflate, sdch'
+    'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8,de;q=0.6,ja;q=0.4,ms;q=0.2,vi;q=0.2,zh-CN;q=0.2,zh;q=0.2,zh-TW;q=0.2,ru;q=0.2,id;q=0.2,fr;q=0.2'
+    'HTTP_COOKIE' => 'advanced-frontend=hre6r0c9u53mu1ltbthtqba1j2; advanced-backend=gf8qpdoalmd491pc3l8vfan9i7; _csrf-backend=1666c6e843a8860a449ee125b348c82685c0da308eec9662d0eb5ba32b701048a%3A2%3A%7Bi%3A0%3Bs%3A13%3A%22_csrf-backend%22%3Bi%3A1%3Bs%3A32%3A%22O2v8EKMt7AiBnqsWGEsCeIHo1zyUxVQV%22%3B%7D; _csrf-frontend=f85fe18f5ee6ae470f2846f2ac7836bd720c3b910b4d2b7c704e30f9e8964567a%3A2%3A%7Bi%3A0%3Bs%3A14%3A%22_csrf-frontend%22%3Bi%3A1%3Bs%3A32%3A%22jjnVl7r6Uj8L7cakJCPhcT6BSAZxw0-X%22%3B%7D'
+    'PATH' => '/usr/bin:/bin:/usr/sbin:/sbin'
+    'DYLD_LIBRARY_PATH' => '/Applications/XAMPP/xamppfiles/lib:/Applications/XAMPP/xamppfiles/lib'
+    'SERVER_SIGNATURE' => ''
+    'SERVER_SOFTWARE' => 'Apache/2.4.17 (Unix) OpenSSL/1.0.1q PHP/5.6.15 mod_perl/2.0.8-dev Perl/v5.16.3'
+    'SERVER_NAME' => 'motivation.localhost'
+    'SERVER_ADDR' => '127.0.0.1'
+    'SERVER_PORT' => '80'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'REQUEST_SCHEME' => 'http'
+    'CONTEXT_PREFIX' => ''
+    'CONTEXT_DOCUMENT_ROOT' => '/Users/VVinners/Desktop/scripts/motivation.localhost'
+    'SERVER_ADMIN' => 'you@example.com'
+    'SCRIPT_FILENAME' => '/Users/VVinners/Desktop/scripts/motivation.localhost/api/web/index.php'
+    'REMOTE_PORT' => '59918'
+    'REDIRECT_URL' => 'http://motivation.localhost/api/web/v1/posts'
+    'GATEWAY_INTERFACE' => 'CGI/1.1'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'REQUEST_METHOD' => 'GET'
+    'QUERY_STRING' => ''
+    'REQUEST_URI' => '/api/web/v1/posts'
+    'SCRIPT_NAME' => '/api/web/index.php'
+    'PHP_SELF' => '/api/web/index.php'
+    'REQUEST_TIME_FLOAT' => 1472394811.467
+    'REQUEST_TIME' => 1472394811
+]
