@@ -778,7 +778,7 @@ Upgrade from Yii 2.0 RC
   was possible. If your timestamps are stored in the database without a timezone identifier you have to ensure they are in UTC or
   add a timezone identifier explicitly.
 
-* `yii\bootstrap\Collapse` is now encoding labels by default. `encode` item option and global `encodeLabels` property were
+* `yii\bootstrap4\Collapse` is now encoding labels by default. `encode` item option and global `encodeLabels` property were
  introduced to disable it. Keys are no longer used as labels. You need to remove keys and use `label` item option instead.
 
 * The `yii\base\View::beforeRender()` and `yii\base\View::afterRender()` methods have two extra parameters `$viewFile`
@@ -994,11 +994,11 @@ new ones save the following code as `convert.php` that should be placed in the s
   of the alias `@web`. For example, `Url::to('@web/images/logo.png')` will return `/BaseUrl/images/logo.png`.
 
 * The following properties are now taking `false` instead of `null` for "don't use" case:
-  - `yii\bootstrap\NavBar::$brandLabel`.
-  - `yii\bootstrap\NavBar::$brandUrl`.
-  - `yii\bootstrap\Modal::$closeButton`.
-  - `yii\bootstrap\Modal::$toggleButton`.
-  - `yii\bootstrap\Alert::$closeButton`.
+  - `yii\bootstrap4\NavBar::$brandLabel`.
+  - `yii\bootstrap4\NavBar::$brandUrl`.
+  - `yii\bootstrap4\Modal::$closeButton`.
+  - `yii\bootstrap4\Modal::$toggleButton`.
+  - `yii\bootstrap4\Alert::$closeButton`.
   - `yii\widgets\LinkPager::$nextPageLabel`.
   - `yii\widgets\LinkPager::$prevPageLabel`.
   - `yii\widgets\LinkPager::$firstPageLabel`.
