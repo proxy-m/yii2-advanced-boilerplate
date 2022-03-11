@@ -7,6 +7,8 @@
 
 namespace yii\helpers;
 
+use yii\base\NotSupportedException;
+
 /**
  * Class BaseIpHelper provides concrete implementation for [[IpHelper]]
  *
@@ -61,12 +63,13 @@ class BaseIpHelper
      * @param string $range the valid IPv4 or IPv6 CIDR range, e.g. `10.0.0.0/8` or `2001:af::/64`
      * @return bool whether $subnet is contained by $range
      *
+     * @throws NotSupportedException
      * @see https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
      */
     public static function inRange($subnet, $range)
     {
-        [$ip, $mask] = array_pad(explode('/', $subnet), 2, null);
-        [$net, $netMask] = array_pad(explode('/', $range), 2, null);
+        list($ip, $mask) = array_pad(explode('/', $subnet), 2, null);
+        list($net, $netMask) = array_pad(explode('/', $range), 2, null);
 
         $ipVersion = static::getIpVersion($ip);
         $netVersion = static::getIpVersion($net);
@@ -75,8 +78,8 @@ class BaseIpHelper
         }
 
         $maxMask = $ipVersion === self::IPV4 ? self::IPV4_ADDRESS_LENGTH : self::IPV6_ADDRESS_LENGTH;
-        $mask = $mask ?? $maxMask;
-        $netMask = $netMask ?? $maxMask;
+        $mask = isset($mask) ? $mask : $maxMask;
+        $netMask = isset($netMask) ? $netMask : $maxMask;
 
         $binIp = static::ip2bin($ip);
         $binNet = static::ip2bin($net);
@@ -102,19 +105,22 @@ class BaseIpHelper
      *
      * @param string $ip the valid IPv4 or IPv6 address
      * @return string bits as a string
+     * @throws NotSupportedException
      */
     public static function ip2bin($ip)
     {
+        $ipBinary = null;
         if (static::getIpVersion($ip) === self::IPV4) {
-            return str_pad(base_convert(ip2long($ip), 10, 2), self::IPV4_ADDRESS_LENGTH, '0', STR_PAD_LEFT);
+            $ipBinary = pack('N', ip2long($ip));
+        } elseif (@inet_pton('::1') === false) {
+            throw new NotSupportedException('IPv6 is not supported by inet_pton()!');
+        } else {
+            $ipBinary = inet_pton($ip);
         }
 
-        $unpack = unpack('A16', inet_pton($ip));
-        $binStr = array_shift($unpack);
-        $bytes = self::IPV6_ADDRESS_LENGTH / 8; // 128 bit / 8 = 16 bytes
         $result = '';
-        while ($bytes-- > 0) {
-            $result = sprintf('%08b', isset($binStr[$bytes]) ? ord($binStr[$bytes]) : '0') . $result;
+        for ($i = 0, $iMax = strlen($ipBinary); $i < $iMax; $i += 4) {
+            $result .= str_pad(decbin(unpack('N', substr($ipBinary, $i, 4))[1]), 32, '0', STR_PAD_LEFT);
         }
         return $result;
     }

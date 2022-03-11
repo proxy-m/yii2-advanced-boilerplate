@@ -10,26 +10,9 @@ namespace yii\caching;
 /**
  * ArrayCache provides caching for the current request only by storing the values in an array.
  *
- * Application configuration example:
+ * See [[Cache]] for common cache operations that ArrayCache supports.
  *
- * ```php
- * return [
- *     'components' => [
- *         'cache' => [
- *             '__class' => yii\caching\Cache::class,
- *             'handler' => [
- *                 '__class' => yii\caching\ArrayCache::class,
- *             ],
- *         ],
- *         // ...
- *     ],
- *     // ...
- * ];
- * ```
- *
- * See [[\Psr\SimpleCache\CacheInterface]] for common cache operations that ArrayCache supports.
- *
- * Unlike the [[Cache]], ArrayCache allows the expire parameter of [[set()]] and [[setMultiple()]]  to
+ * Unlike the [[Cache]], ArrayCache allows the expire parameter of [[set]], [[add]], [[multiSet]] and [[multiAdd]] to
  * be a floating point number, so you may specify the time in milliseconds (e.g. 0.1 will be 100 milliseconds).
  *
  * For enhanced performance of ArrayCache, you can disable serialization of the stored data by setting [[$serializer]] to `false`.
@@ -39,20 +22,17 @@ namespace yii\caching;
  * @author Carsten Brandt <mail@cebe.cc>
  * @since 2.0
  */
-class ArrayCache extends SimpleCache
+class ArrayCache extends Cache
 {
-    /**
-     * @var array cached values.
-     */
     private $_cache = [];
 
 
     /**
      * {@inheritdoc}
      */
-    public function has($key)
+    public function exists($key)
     {
-        $key = $this->normalizeKey($key);
+        $key = $this->buildKey($key);
         return isset($this->_cache[$key]) && ($this->_cache[$key][1] === 0 || $this->_cache[$key][1] > microtime(true));
     }
 
@@ -71,9 +51,21 @@ class ArrayCache extends SimpleCache
     /**
      * {@inheritdoc}
      */
-    protected function setValue($key, $value, $ttl)
+    protected function setValue($key, $value, $duration)
     {
-        $this->_cache[$key] = [$value, $ttl === 0 ? 0 : microtime(true) + $ttl];
+        $this->_cache[$key] = [$value, $duration === 0 ? 0 : microtime(true) + $duration];
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function addValue($key, $value, $duration)
+    {
+        if (isset($this->_cache[$key]) && ($this->_cache[$key][1] === 0 || $this->_cache[$key][1] > microtime(true))) {
+            return false;
+        }
+        $this->_cache[$key] = [$value, $duration === 0 ? 0 : microtime(true) + $duration];
         return true;
     }
 
@@ -89,7 +81,7 @@ class ArrayCache extends SimpleCache
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    protected function flushValues()
     {
         $this->_cache = [];
         return true;

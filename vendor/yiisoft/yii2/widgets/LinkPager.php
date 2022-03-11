@@ -100,7 +100,7 @@ class LinkPager extends Widget
      */
     public $nextPageLabel = '&raquo;';
     /**
-     * @var string|bool the text label for the previous page button. Note that this will NOT be HTML-encoded.
+     * @var string|bool the text label for the "previous" page button. Note that this will NOT be HTML-encoded.
      * If this property is false, the "previous" page button will not be displayed.
      */
     public $prevPageLabel = '&laquo;';
@@ -149,14 +149,13 @@ class LinkPager extends Widget
     /**
      * Executes the widget.
      * This overrides the parent implementation by displaying the generated page buttons.
-     * @return string the result of widget execution to be outputted.
      */
     public function run()
     {
         if ($this->registerLinkTags) {
             $this->registerLinkTags();
         }
-        return $this->renderPageButtons();
+        echo $this->renderPageButtons();
     }
 
     /**
@@ -201,7 +200,7 @@ class LinkPager extends Widget
         }
 
         // internal pages
-        [$beginPage, $endPage] = $this->getPageRange();
+        list($beginPage, $endPage) = $this->getPageRange();
         for ($i = $beginPage; $i <= $endPage; ++$i) {
             $buttons[] = $this->renderPageButton($i + 1, $i, null, $this->disableCurrentPageButton && $i == $currentPage, $i == $currentPage);
         }

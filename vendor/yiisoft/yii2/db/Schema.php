@@ -15,26 +15,24 @@ use yii\base\NotSupportedException;
 use yii\caching\Cache;
 use yii\caching\CacheInterface;
 use yii\caching\TagDependency;
-use yii\helpers\StringHelper;
 
 /**
  * Schema is the base class for concrete DBMS-specific schema classes.
  *
  * Schema represents the database schema information that is DBMS specific.
  *
- * @property string $lastInsertID The row ID of the last row inserted, or the last value retrieved from the
- * sequence object. This property is read-only.
- * @property QueryBuilder $queryBuilder The query builder for this connection. This property is read-only.
- * @property string[] $schemaNames All schema names in the database, except system schemas. This property is
- * read-only.
- * @property string $serverVersion Server version as a string. This property is read-only.
- * @property string[] $tableNames All table names in the database. This property is read-only.
- * @property TableSchema[] $tableSchemas The metadata for all tables in the database. Each array element is an
- * instance of [[TableSchema]] or its child class. This property is read-only.
- * @property string $transactionIsolationLevel The transaction isolation level to use for this transaction.
- * This can be one of [[Transaction::READ_UNCOMMITTED]], [[Transaction::READ_COMMITTED]],
+ * @property-read string $lastInsertID The row ID of the last row inserted, or the last value retrieved from
+ * the sequence object.
+ * @property-read QueryBuilder $queryBuilder The query builder for this connection.
+ * @property-read string[] $schemaNames All schema names in the database, except system schemas.
+ * @property-read string $serverVersion Server version as a string.
+ * @property-read string[] $tableNames All table names in the database.
+ * @property-read TableSchema[] $tableSchemas The metadata for all tables in the database. Each array element
+ * is an instance of [[TableSchema]] or its child class.
+ * @property-write string $transactionIsolationLevel The transaction isolation level to use for this
+ * transaction. This can be one of [[Transaction::READ_UNCOMMITTED]], [[Transaction::READ_COMMITTED]],
  * [[Transaction::REPEATABLE_READ]] and [[Transaction::SERIALIZABLE]] but also a string containing DBMS specific
- * syntax to be used after `SET TRANSACTION ISOLATION LEVEL`. This property is write-only.
+ * syntax to be used after `SET TRANSACTION ISOLATION LEVEL`.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @author Sergey Makinen <sergey@makinen.ru>
@@ -84,13 +82,13 @@ abstract class Schema extends BaseObject
      * If left part is found in DB error message exception class from the right part is used.
      */
     public $exceptionMap = [
-        'SQLSTATE[23' => IntegrityException::class,
+        'SQLSTATE[23' => 'yii\db\IntegrityException',
     ];
     /**
      * @var string|array column schema class or class config
      * @since 2.0.11
      */
-    public $columnSchemaClass = ColumnSchema::class;
+    public $columnSchemaClass = 'yii\db\ColumnSchema';
 
     /**
      * @var string|string[] character used to quote schema, table, etc. names.
@@ -256,7 +254,7 @@ abstract class Schema extends BaseObject
      * Determines the PDO type for the given PHP data value.
      * @param mixed $data the data whose PDO type is to be determined
      * @return int the PDO type
-     * @see http://www.php.net/manual/en/pdo.constants.php
+     * @see https://www.php.net/manual/en/pdo.constants.php
      */
     public function getPdoType($data)
     {
@@ -270,7 +268,7 @@ abstract class Schema extends BaseObject
         ];
         $type = gettype($data);
 
-        return $typeMap[$type] ?? \PDO::PARAM_STR;
+        return isset($typeMap[$type]) ? $typeMap[$type] : \PDO::PARAM_STR;
     }
 
     /**
@@ -361,7 +359,7 @@ abstract class Schema extends BaseObject
      * @param string $sequenceName name of the sequence object (required by some DBMS)
      * @return string the row ID of the last row inserted, or the last value retrieved from the sequence object
      * @throws InvalidCallException if the DB connection is not active
-     * @see http://www.php.net/manual/en/function.PDO-lastInsertId.php
+     * @see https://www.php.net/manual/en/function.PDO-lastInsertId.php
      */
     public function getLastInsertID($sequenceName = '')
     {
@@ -441,7 +439,7 @@ abstract class Schema extends BaseObject
                 break;
             }
 
-            $result[$name] = $columns[$name] ?? $tableSchema->columns[$name]->defaultValue;
+            $result[$name] = isset($columns[$name]) ? $columns[$name] : $tableSchema->columns[$name]->defaultValue;
         }
 
         return $result;
@@ -452,7 +450,7 @@ abstract class Schema extends BaseObject
      * Note that if the parameter is not a string, it will be returned without change.
      * @param string $str string to be quoted
      * @return string the properly quoted string
-     * @see http://www.php.net/manual/en/function.PDO-quote.php
+     * @see https://www.php.net/manual/en/function.PDO-quote.php
      */
     public function quoteValue($str)
     {
@@ -460,7 +458,7 @@ abstract class Schema extends BaseObject
             return $str;
         }
 
-        if (($value = $this->db->getSlavePdo()->quote($str)) !== false) {
+        if (mb_stripos($this->db->dsn, 'odbc:') === false && ($value = $this->db->getSlavePdo()->quote($str)) !== false) {
             return $value;
         }
 
@@ -479,18 +477,32 @@ abstract class Schema extends BaseObject
      */
     public function quoteTableName($name)
     {
-        if (strpos($name, '(') !== false || strpos($name, '{{') !== false) {
+
+        if (strncmp($name, '(', 1) === 0 && strpos($name, ')') === strlen($name) - 1) {
+            return $name;
+        }
+        if (strpos($name, '{{') !== false) {
             return $name;
         }
         if (strpos($name, '.') === false) {
             return $this->quoteSimpleTableName($name);
         }
-        $parts = explode('.', $name);
+        $parts = $this->getTableNameParts($name);
         foreach ($parts as $i => $part) {
             $parts[$i] = $this->quoteSimpleTableName($part);
         }
-
         return implode('.', $parts);
+    }
+
+    /**
+     * Splits full table name into parts
+     * @param string $name
+     * @return array
+     * @since 2.0.22
+     */
+    protected function getTableNameParts($name)
+    {
+        return explode('.', $name);
     }
 
     /**
@@ -532,7 +544,7 @@ abstract class Schema extends BaseObject
         if (is_string($this->tableQuoteCharacter)) {
             $startingCharacter = $endingCharacter = $this->tableQuoteCharacter;
         } else {
-            [$startingCharacter, $endingCharacter] = $this->tableQuoteCharacter;
+            list($startingCharacter, $endingCharacter) = $this->tableQuoteCharacter;
         }
         return strpos($name, $startingCharacter) !== false ? $name : $startingCharacter . $name . $endingCharacter;
     }
@@ -546,10 +558,10 @@ abstract class Schema extends BaseObject
      */
     public function quoteSimpleColumnName($name)
     {
-        if (is_string($this->tableQuoteCharacter)) {
+        if (is_string($this->columnQuoteCharacter)) {
             $startingCharacter = $endingCharacter = $this->columnQuoteCharacter;
         } else {
-            [$startingCharacter, $endingCharacter] = $this->columnQuoteCharacter;
+            list($startingCharacter, $endingCharacter) = $this->columnQuoteCharacter;
         }
         return $name === '*' || strpos($name, $startingCharacter) !== false ? $name : $startingCharacter . $name . $endingCharacter;
     }
@@ -653,7 +665,7 @@ abstract class Schema extends BaseObject
             return $e;
         }
 
-        $exceptionClass = Exception::class;
+        $exceptionClass = '\yii\db\Exception';
         foreach ($this->exceptionMap as $error => $class) {
             if (strpos($e->getMessage(), $error) !== false) {
                 $exceptionClass = $class;
@@ -661,7 +673,7 @@ abstract class Schema extends BaseObject
         }
         $message = $e->getMessage() . "\nThe SQL being executed was: $rawSql";
         $errorInfo = $e instanceof \PDOException ? $e->errorInfo : null;
-        return new $exceptionClass($message, $errorInfo, (int) $e->getCode(), $e);
+        return new $exceptionClass($message, $errorInfo, $e->getCode(), $e);
     }
 
     /**

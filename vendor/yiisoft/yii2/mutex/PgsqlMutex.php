@@ -8,7 +8,6 @@
 namespace yii\mutex;
 
 use yii\base\InvalidConfigException;
-use yii\base\InvalidArgumentException;
 
 /**
  * PgsqlMutex implements mutex "lock" mechanism via PgSQL locks.
@@ -19,11 +18,11 @@ use yii\base\InvalidArgumentException;
  * [
  *     'components' => [
  *         'db' => [
- *             '__class' => \yii\db\Connection::class,
+ *             'class' => 'yii\db\Connection',
  *             'dsn' => 'pgsql:host=127.0.0.1;dbname=demo',
  *         ]
  *         'mutex' => [
- *             '__class' => \yii\mutex\PgsqlMutex::class,
+ *             'class' => 'yii\mutex\PgsqlMutex',
  *         ],
  *     ],
  * ]
@@ -36,6 +35,9 @@ use yii\base\InvalidArgumentException;
  */
 class PgsqlMutex extends DbMutex
 {
+    use RetryAcquireTrait;
+
+
     /**
      * Initializes PgSQL specific mutex component implementation.
      * @throws InvalidConfigException if [[db]] is not PgSQL connection.
@@ -67,16 +69,16 @@ class PgsqlMutex extends DbMutex
      */
     protected function acquireLock($name, $timeout = 0)
     {
-        if ($timeout !== 0) {
-            throw new InvalidArgumentException('PgsqlMutex does not support timeout.');
-        }
-        [$key1, $key2] = $this->getKeysFromName($name);
-        return $this->db->useMaster(function ($db) use ($key1, $key2) {
-            /** @var \yii\db\Connection $db */
-            return (bool) $db->createCommand(
-                'SELECT pg_try_advisory_lock(:key1, :key2)',
-                [':key1' => $key1, ':key2' => $key2]
-            )->queryScalar();
+        list($key1, $key2) = $this->getKeysFromName($name);
+
+        return $this->retryAcquire($timeout, function () use ($key1, $key2) {
+            return $this->db->useMaster(function ($db) use ($key1, $key2) {
+                /** @var \yii\db\Connection $db */
+                return (bool) $db->createCommand(
+                    'SELECT pg_try_advisory_lock(:key1, :key2)',
+                    [':key1' => $key1, ':key2' => $key2]
+                )->queryScalar();
+            });
         });
     }
 
@@ -88,7 +90,7 @@ class PgsqlMutex extends DbMutex
      */
     protected function releaseLock($name)
     {
-        [$key1, $key2] = $this->getKeysFromName($name);
+        list($key1, $key2) = $this->getKeysFromName($name);
         return $this->db->useMaster(function ($db) use ($key1, $key2) {
             /** @var \yii\db\Connection $db */
             return (bool) $db->createCommand(

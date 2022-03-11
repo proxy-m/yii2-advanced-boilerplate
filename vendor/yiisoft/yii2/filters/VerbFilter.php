@@ -28,7 +28,7 @@ use yii\web\MethodNotAllowedHttpException;
  * {
  *     return [
  *         'verbs' => [
- *             '__class' => \yii\filters\VerbFilter::class,
+ *             'class' => \yii\filters\VerbFilter::class,
  *             'actions' => [
  *                 'index'  => ['GET'],
  *                 'view'   => ['GET'],
@@ -57,6 +57,8 @@ class VerbFilter extends Behavior
      * You can use `'*'` to stand for all actions. When an action is explicitly
      * specified, it takes precedence over the specification given by `'*'`.
      *
+     * @see https://www.yiiframework.com/doc/guide/2.0/en/structure-controllers#action-ids
+     *
      * For example,
      *
      * ```php
@@ -64,6 +66,7 @@ class VerbFilter extends Behavior
      *   'create' => ['GET', 'POST'],
      *   'update' => ['GET', 'PUT', 'POST'],
      *   'delete' => ['POST', 'DELETE'],
+     *   'author-comment' => ['POST', 'DELETE'],
      *   '*' => ['GET'],
      * ]
      * ```
@@ -89,18 +92,19 @@ class VerbFilter extends Behavior
     {
         $action = $event->action->id;
         if (isset($this->actions[$action])) {
-            $allowed = $this->actions[$action];
+            $verbs = $this->actions[$action];
         } elseif (isset($this->actions['*'])) {
-            $allowed = $this->actions['*'];
+            $verbs = $this->actions['*'];
         } else {
             return $event->isValid;
         }
 
         $verb = Yii::$app->getRequest()->getMethod();
+        $allowed = array_map('strtoupper', $verbs);
         if (!in_array($verb, $allowed)) {
             $event->isValid = false;
             // https://tools.ietf.org/html/rfc2616#section-14.7
-            Yii::$app->getResponse()->setHeader('Allow', implode(', ', $allowed));
+            Yii::$app->getResponse()->getHeaders()->set('Allow', implode(', ', $allowed));
             throw new MethodNotAllowedHttpException('Method Not Allowed. This URL can only handle the following request methods: ' . implode(', ', $allowed) . '.');
         }
 

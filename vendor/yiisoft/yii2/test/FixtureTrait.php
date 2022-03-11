@@ -48,7 +48,7 @@ trait FixtureTrait
      *     'users' => UserFixture::class,
      *     // "cache" fixture with configuration
      *     'cache' => [
-     *          '__class' => CacheFixture::class,
+     *          'class' => CacheFixture::class,
      *          'host' => 'xxx',
      *     ],
      * ]
@@ -165,12 +165,11 @@ trait FixtureTrait
 
     /**
      * Creates the specified fixture instances.
-     * All dependent fixtures will also be created.
+     * All dependent fixtures will also be created. Duplicate fixtures and circular dependencies will only be created once.
      * @param array $fixtures the fixtures to be created. You may provide fixture names or fixture configurations.
      * If this parameter is not provided, the fixtures specified in [[globalFixtures()]] and [[fixtures()]] will be created.
      * @return Fixture[] the created fixture instances
-     * @throws InvalidConfigException if fixtures are not properly configured or if a circular dependency among
-     * the fixtures is detected.
+     * @throws InvalidConfigException if fixtures are not properly configured
      */
     protected function createFixtures(array $fixtures)
     {
@@ -180,14 +179,14 @@ trait FixtureTrait
         foreach ($fixtures as $name => $fixture) {
             if (!is_array($fixture)) {
                 $class = ltrim($fixture, '\\');
-                $fixtures[$name] = ['__class' => $class];
+                $fixtures[$name] = ['class' => $class];
                 $aliases[$class] = is_int($name) ? $class : $name;
-            } elseif (isset($fixture['__class'])) {
-                $class = ltrim($fixture['__class'], '\\');
+            } elseif (isset($fixture['class'])) {
+                $class = ltrim($fixture['class'], '\\');
                 $config[$class] = $fixture;
                 $aliases[$class] = $name;
             } else {
-                throw new InvalidConfigException("You must specify '__class' for the fixture '$name'.");
+                throw new InvalidConfigException("You must specify 'class' for the fixture '$name'.");
             }
         }
 
@@ -197,22 +196,21 @@ trait FixtureTrait
         while (($fixture = array_pop($stack)) !== null) {
             if ($fixture instanceof Fixture) {
                 $class = get_class($fixture);
-                $name = $aliases[$class] ?? $class;
+                $name = isset($aliases[$class]) ? $aliases[$class] : $class;
                 unset($instances[$name]);  // unset so that the fixture is added to the last in the next line
                 $instances[$name] = $fixture;
             } else {
-                $class = ltrim($fixture['__class'], '\\');
-                $name = $aliases[$class] ?? $class;
+                $class = ltrim($fixture['class'], '\\');
+                $name = isset($aliases[$class]) ? $aliases[$class] : $class;
                 if (!isset($instances[$name])) {
                     $instances[$name] = false;
                     $stack[] = $fixture = Yii::createObject($fixture);
                     foreach ($fixture->depends as $dep) {
                         // need to use the configuration provided in test case
-                        $stack[] = $config[$dep] ?? ['__class' => $dep];
+                        $stack[] = isset($config[$dep]) ? $config[$dep] : ['class' => $dep];
                     }
-                } elseif ($instances[$name] === false) {
-                    throw new InvalidConfigException("A circular dependency is detected for fixture '$class'.");
                 }
+                // if the fixture is already loaded (ie. a circular dependency or if two fixtures depend on the same fixture) just skip it.
             }
         }
 

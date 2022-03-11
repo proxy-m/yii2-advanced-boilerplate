@@ -203,44 +203,9 @@ interface MessageInterface
     public function embedContent($content, array $options = []);
 
     /**
-     * Adds custom header value to the message.
-     * Several invocations of this method with the same name will add multiple header values.
-     * @param string $name header name.
-     * @param string $value header value.
-     * @return $this self reference.
-     * @since 3.0.0
-     */
-    public function addHeader($name, $value);
-
-    /**
-     * Sets custom header value to the message.
-     * @param string $name header name.
-     * @param string|array $value header value or values.
-     * @return $this self reference.
-     * @since 3.0.0
-     */
-    public function setHeader($name, $value);
-
-    /**
-     * Returns all values for the specified header.
-     * @param string $name header name.
-     * @return array header values list.
-     * @since 3.0.0
-     */
-    public function getHeader($name);
-
-    /**
-     * Sets custom header values to the message.
-     * @param array $headers headers in format: `[name => value]`.
-     * @return $this self reference.
-     * @since 3.0.0
-     */
-    public function setHeaders($headers);
-
-    /**
      * Sends this email message.
      * @param MailerInterface $mailer the mailer that should be used to send this message.
-     * If null, the "mail" application component will be used instead.
+     * If null, the "mailer" application component will be used instead.
      * @return bool whether this message is sent successfully.
      */
     public function send(MailerInterface $mailer = null);

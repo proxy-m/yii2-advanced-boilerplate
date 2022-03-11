@@ -12,6 +12,8 @@ use Yii;
 use yii\base\InvalidConfigException;
 use yii\base\Model;
 use yii\helpers\Html;
+use yii\helpers\Json;
+use yii\helpers\Url;
 use yii\i18n\Formatter;
 use yii\widgets\BaseListView;
 
@@ -54,7 +56,7 @@ class GridView extends BaseListView
      * @var string the default data column class if the class name is not explicitly specified when configuring a data column.
      * Defaults to 'yii\grid\DataColumn'.
      */
-    public $dataColumnClass = DataColumn::class;
+    public $dataColumnClass;
     /**
      * @var string the caption of the grid table
      * @see captionOptions
@@ -146,14 +148,14 @@ class GridView extends BaseListView
      *
      * ```php
      * [
-     *     ['__class' => \yii\grid\SerialColumn::class],
+     *     ['class' => SerialColumn::class],
      *     [
-     *         '__class' => \yii\grid\DataColumn::class, // this line is optional
+     *         'class' => DataColumn::class, // this line is optional
      *         'attribute' => 'name',
      *         'format' => 'text',
      *         'label' => 'Name',
      *     ],
-     *     ['__class' => \yii\grid\CheckboxColumn::class],
+     *     ['class' => CheckboxColumn::class],
      * ]
      * ```
      *
@@ -219,6 +221,10 @@ class GridView extends BaseListView
      */
     public $filterUrl;
     /**
+     * @var string additional jQuery selector for selecting filter input fields
+     */
+    public $filterSelector;
+    /**
      * @var string whether the filters should be displayed in the grid view. Valid values include:
      *
      * - [[FILTER_POS_HEADER]]: the filters will be displayed on top of each column's header cell.
@@ -242,6 +248,11 @@ class GridView extends BaseListView
      * This is mainly used by [[Html::error()]] when rendering an error message next to every filter input field.
      */
     public $filterErrorOptions = ['class' => 'help-block'];
+    /**
+     * @var bool whatever to apply filters on losing focus. Leaves an ability to manage filters via yiiGridView JS
+     * @since 2.0.16
+     */
+    public $filterOnFocusOut = true;
     /**
      * @var string the layout that determines how different sections of the grid view should be organized.
      * The following tokens will be replaced with the corresponding section contents:
@@ -278,6 +289,19 @@ class GridView extends BaseListView
     }
 
     /**
+     * Runs the widget.
+     */
+    public function run()
+    {
+        $view = $this->getView();
+        GridViewAsset::register($view);
+        $id = $this->options['id'];
+        $options = Json::htmlEncode(array_merge($this->getClientOptions(), ['filterOnFocusOut' => $this->filterOnFocusOut]));
+        $view->registerJs("jQuery('#$id').yiiGridView($options);");
+        parent::run();
+    }
+
+    /**
      * Renders validator errors of filter model.
      * @return string the rendering result.
      */
@@ -304,6 +328,25 @@ class GridView extends BaseListView
     }
 
     /**
+     * Returns the options for the grid view JS widget.
+     * @return array the options
+     */
+    protected function getClientOptions()
+    {
+        $filterUrl = isset($this->filterUrl) ? $this->filterUrl : Yii::$app->request->url;
+        $id = $this->filterRowOptions['id'];
+        $filterSelector = "#$id input, #$id select";
+        if (isset($this->filterSelector)) {
+            $filterSelector .= ', ' . $this->filterSelector;
+        }
+
+        return [
+            'filterUrl' => Url::to($filterUrl),
+            'filterSelector' => $filterSelector,
+        ];
+    }
+
+    /**
      * Renders the data models for the grid view.
      * @return string the HTML code of table
      */
@@ -316,13 +359,13 @@ class GridView extends BaseListView
 
         $tableFooter = false;
         $tableFooterAfterBody = false;
-        
+
         if ($this->showFooter) {
             if ($this->placeFooterAfterBody) {
                 $tableFooterAfterBody = $this->renderTableFooter();
             } else {
                 $tableFooter = $this->renderTableFooter();
-            }	        
+            }
         }
 
         $content = array_filter([
@@ -504,7 +547,7 @@ class GridView extends BaseListView
                 $column = $this->createDataColumn($column);
             } else {
                 $column = Yii::createObject(array_merge([
-                    '__class' => $this->dataColumnClass ?: DataColumn::class,
+                    'class' => $this->dataColumnClass ?: DataColumn::className(),
                     'grid' => $this,
                 ], $column));
             }
@@ -529,11 +572,11 @@ class GridView extends BaseListView
         }
 
         return Yii::createObject([
-            '__class' => $this->dataColumnClass ?: DataColumn::class,
+            'class' => $this->dataColumnClass ?: DataColumn::className(),
             'grid' => $this,
             'attribute' => $matches[1],
-            'format' => $matches[3] ?? 'text',
-            'label' => $matches[5] ?? null,
+            'format' => isset($matches[3]) ? $matches[3] : 'text',
+            'label' => isset($matches[5]) ? $matches[5] : null,
         ]);
     }
 

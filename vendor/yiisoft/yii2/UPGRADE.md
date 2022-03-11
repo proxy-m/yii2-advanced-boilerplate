@@ -3,7 +3,7 @@ Upgrading Instructions for Yii Framework 2.0
 
 This file contains the upgrade notes for Yii 2.0. These notes highlight changes that
 could break your application when you upgrade Yii from one version to another.
-Even though we try to ensure backwards compabitilty (BC) as much as possible, sometimes
+Even though we try to ensure backwards compatibility (BC) as much as possible, sometimes
 it is not possible or very complicated to avoid it and still create a good solution to
 a problem. You may also want to check out the [versioning policy](https://github.com/yiisoft/yii2/blob/master/docs/internals/versions.md)
 for further details.
@@ -51,138 +51,311 @@ if you want to upgrade from version A to version C and there is
 version B between A and C, you need to follow the instructions
 for both A and B.
 
-Upgrade from Yii 2.0.x
-----------------------
+Upgrade from Yii 2.0.44
+-----------------------
 
-* PHP requirements were raised to 7.1. Make sure your code is updated accordingly.
-* memcache PECL extension support was dropped. Use memcached PECL extension instead.
-* Following new methods have been added to `yii\mail\MessageInterface` `addHeader()`, `setHeader()`, `getHeader()`, `setHeaders()`
-  providing ability to setup custom mail headers. Make sure your provide implementation for those methods, while
-  creating your own mailer solution.
-* `::className()` method calls should be replaced with [native](http://php.net/manual/en/language.oop5.basic.php#language.oop5.basic.class.class) `::class`.
-  When upgrading to Yii 3.0, You should do a global search and replace for `::className()` to `::class`.
-  All calls on objects via `->className()` should be replaced by a call to `get_class()`.
-* Dependency injection (DI) layer has been replaced by "yiisoft/di" package. Make sure to update class/object definitions at
-  your code to match the syntax used by it. In particular: you should use '__class' array key instead of 'class' for
-  class name specification.
-* XCache and Zend data cache support was removed. Switch to another caching backends.
-* Rename `InvalidParamException` usage to `InvalidArgumentException`.
-* CAPTCHA package has been moved into separate extension https://github.com/yiisoft/yii2-captcha.
-  Include it in your composer.json if you use it.
-* JQuery related code (e.g. `yii.js`, `yiiActiveForm.js`, `yiiGridView.js`) has been moved into separate extension https://github.com/yiisoft/yii2-jquery.
-  Include it in your composer.json if you use it.
-* REST API package has been moved into separate extension https://github.com/yiisoft/yii2-rest.
-  Include it in your composer.json if you use it.
-* MSSQL Server DB package has been moved into separate extension https://github.com/yiisoft/yii2-mssql.
-  Include it in your composer.json if you use it.
-* Oracle DB package has been moved into separate extension https://github.com/yiisoft/yii2-oracle.
-  Include it in your composer.json if you use it.
-* CUBRID support has been removed, package `yii\db\cubrid\*` is no longer available.
-  If you need to use CUBRID further you should create your own integration for it.
-* Masked input field widget was moved into separate extension https://github.com/yiisoft/yii2-maskedinput.
-  Include it in your composer.json if you use it.
-* PJAX support has been removed: widget `yii\widget\Pjax`, method `yii\web\Request::getIsPjax()`, PJAX related checks and
-  headers are no longer available. If you wish to use PJAX further you should create your own integration for it.
-* If you've used ApcCache and set `useApcu` in your config, remove the option.
-* During mail view rendering the `$message` variable is no longer set by default to be an instance of `yii\mail\MessageInterface`. Instead it is available via `$this->context->message` expression.
-* `yii\mail\BaseMailer::render()` method has been removed. Make sure you do not use it anywhere in your program.
-  Mail view rendering is now encapsulated into `yii\mail\Template` class.
-* Properties `view`, `viewPath`, `htmlLayout` and `textLayout` have been moved from `yii\mail\BaseMailer` to `yii\mail\Composer` class,
-  which now encapsulates message composition.
-* Interface of `yii\log\Logger` has been changed according to PSR-3 `Psr\Log\LoggerInterface`.
-  Make sure you update your code accordingly in case you invoke `Logger` methods directly.
-* Constants `yii\log\Logger::LEVEL_ERROR`, `yii\log\Logger::LEVEL_WARNING` and so on have been removed.
-  Use constants from `Psr\Log\LogLevel` instead.
-* Method `yii\BaseYii::trace()` has been renamed to `debug()`. Make sure you use correct name for it.
-* Class `yii\log\Dispatcher` has been removed as well as application 'log' component. Log targets
-  now should be configured using `yii\base\Application::$logger` property. Neither 'log' or 'logger'
-  components should be present at `yii\base\Application::$bootstrap`
-* Profiling related functionality has been extracted into a separated component under `yii\profile\ProfilerInterface`.
-  Profiling messages should be collection using `yii\base\Application::$profiler`. In case you wish to
-  continue storing profiling messages along with the log ones, you may use `yii\profile\LogTarget` profiling target.
-* Classes `yii\web\Request` and `yii\web\Response` have been updated to match interfaces `Psr\Http\Message\ServerRequestInterface`
-  and `Psr\Http\Message\ResponseInterface` accordingly. Make sure you use their methods and properties correctly.
-  In particular: method `getHeaders()` and corresponding virtual property `$headers` are no longer return `HeaderCollection`
-  instance, you can use `getHeaderCollection()` in order to use old headers setup syntax; `Request|Response::$version` renamed
-  to `Request|Response::$protocolVersion`; `Response::$statusText` renamed `Response::$reasonPhrase`;
-  `Request::$bodyParams` renamed to `Request::$parsedBody`; `Request::getBodyParam()` renamed to `Request::getParsedBodyParam()`;
-* `yii\web\Response::$stream` is no longer available, use `yii\web\Response::withBody()` to setup stream response.
-  You can use `Response::$bodyRange` to setup stream content range.
-* Classes `yii\web\CookieCollection`, `yii\web\HeaderCollection` and `yii\web\UploadedFile` have been moved under
-  namespace `yii\http\*`. Make sure to refer to those classes using correct fully qualified name.
-* Public interface of `UploadedFile` class has been changed according to `Psr\Http\Message\UploadedFileInterface`.
-  Make sure you refer to its properties and methods with correct names.
-* `yii\captcha\CaptchaAction` has been refactored. Rendering logic was extracted into `yii\captcha\DriverInterface`, which
-  instance is available via `yii\captcha\CaptchaAction::$driver` field. All image settings now should be passed to
-  the driver fields instead of action. Automatic detection of the rendering driver is no longer supported.
-* `yii\captcha\Captcha::checkRequirements()` method has been removed.
-* All cache related classes interface has been changed according to PSR-16 "Simple Cache" specification. Make sure you
-  change your invocations for the cache methods accordingly. The most notable changes affects methods `get()` and `getMultiple()`
-  as they now accept `$default` argument, which value will be returned in case there is no value in the cache. This makes
-  the default return value to be `null` instead of `false`.
-* Particular cache implementation should now be configured as `yii\caching\Cache::$handler` property instead of the
-  component itself. Properties `$defaultTtl`, `$serializer` and `$keyPrefix` has been moved to cache handler and should
-  be configured there. Creating your own cache implementation you should implement `\Psr\SimpleCache\CacheInterface` or
-  extend `yii\caching\SimpleCache` abstract class. Use `yii\caching\CacheInterface` only if you wish to replace `yii\caching\Cache`
-  component providing your own solution for cache dependency handling.
-* `yii\caching\SimpleCache::$serializer` now should be `yii\serialize\SerializerInterface` instance or its DI compatible configuration.
-  Thus it does no longer accept pair of serialize/unserialize functions as an array. Use `yii\serialize\CallbackSerializer` or
-  other predefined serializer class from `yii\serialize\*` namespace instead.
-* Console command used to clear cache now calls related actions "clear" instead of "flush".
-* Yii autoloader was removed in favor of Composer-generated one. You should remove explicit inclusion of `Yii.php` from
-  your entry `index.php` scripts. In case you have relied on class map, use `composer.json` instead of configuring it
-  with PHP. For details please refer to [guide on autoloading](https://github.com/yiisoft/yii2/blob/3.0/docs/guide/concept-autoloading.md),
-  [guide on customizing helpers](https://github.com/yiisoft/yii2/blob/3.0/docs/guide/helper-overview.md#customizing-helper-classes-)
-  and [guide on Working with Third-Party Code](https://github.com/yiisoft/yii2/blob/3.0/docs/guide/tutorial-yii-integration.md).
-* The signature of `yii\web\RequestParserInterface::parse()` was changed. The method now accepts the `yii\web\Request` instance
-  as a sole argument. Make sure you declare and implement this method correctly, while creating your own request parser.
-* Uploaded file retrieve methods have been moved from `yii\http\UploadedFile` to `yii\web\Request`. You should use `Request::getUploadedFileByName()`
-  instead of `UploadedFile::getInstanceByName()` and `Request::getUploadedFilesByName()` instead of `UploadedFile::getInstancesByName()`.
-  Instead of `UploadedFile::getInstance()` and `UploadedFile::getInstances()` use construction `$model->load(Yii::$app->request->getUploadedFiles())`.
-* Result of `yii\web\Request::getBodyParams()` now includes uploaded files (e.g. result of `yii\web\Request::getUploadedFiles()`).
-  You should aware that instances of `yii\http\UploadedFile` may appear inside body params.
-* The following method signature have changed. If you override any of them in your code, you have to adjust these places:
-  `yii\db\QueryBuilder::buildGroupBy($columns)` -> `buildGroupBy($columns, &$params)`
-  `yii\db\QueryBuilder::buildOrderByAndLimit($sql, $orderBy, $limit, $offset)` -> `buildOrderByAndLimit($sql, $orderBy, $limit, $offset, &$params)`
-  `yii\widgets\ActiveField::hint($content = null, $options = [])`
-  `yii\base\View::renderDynamic($statements)` -> `yii\base\View::renderDynamic($statements, array $params = [])`
-* `yii\filters\AccessControl` has been optimized by only instantiating rules at the moment of use.
-   This could lead to a potential BC-break if you are depending on $rules to be instantiated in init().
-* `yii\widgets\BaseListView::run()` and `yii\widgets\GridView::run()` now return content, instead of echoing it.
-  Normally we call `BaseListView::widget()` and for this case behavior is NOT changed.
-  In case you call `::run()` method, ensure that its return is processed correctly.
-* `yii\web\UrlNormalizer` is now enabled by default in `yii\web\UrlManager`.
-  If you are using `yii\web\Request::resolve()` or `yii\web\UrlManager::parseRequest()` directly, make sure that
-  all potential exceptions are handled correctly or set `yii\web\UrlNormalizer::$normalizer` to `false` to disable normalizer.
-* `yii\base\InvalidParamException` was renamed to `yii\base\InvalidArgumentException`.
-* Classes `yii\widgets\ActiveForm`, `yii\widgets\ActiveField`, `yii\grid\GridView`, `yii\web\View` have been refactored
-  to be more generic without including any 'JQuery' support and client-side processing (validation, automatic submit etc.).
-  You should use widget behaviors from `yii\jquery\*` package to make old code function as before. E.g. attach `yii\jquery\ActiveFormClientScript`
-  to `yii\widgets\ActiveForm`, `yii\jquery\GridViewClientScript` to `yii\grid\GridView` and so on.
-* Fields `$enableClientScript` and `$attributes` have been removed from `yii\widgets\ActiveForm`. Make sure
-  you do not use them or specify them during `ActiveForm::begin()` invocation.
-* Field `yii\grid\GridView::$filterSelector` has been removed. Make sure you do not use it or specify it during
-  `GridView::widget()` invocation. Use `yii\jquery\GridViewClientScript::$filterSelector` instead.
-* Method `getClientOptions()` has been removed from `yii\validators\Validator` and all its descendants.
-  All implementations of `clientValidateAttribute()` around built-in validators now return `null`.
-  Use classes from `yii\jquery\validators\client\*` for building client validation (JavaScript) code.
-* Assets `yii\web\JqueryAsset`, `yii\web\YiiAsset`, `yii\validators\ValidationAsset` have been moved under `yii\jquery\*`
-  namespace. Make sure you refer to the new full-qualified names of this classes.
-* Methods `yii\validators\Validator::formatMessage()`, `yii\validators\IpValidator::getIpParsePattern()` and
-  `yii\validators\FileValidator::buildMimeTypeRegexp()` have been made `public`. Make sure you use correct
-  access level specification in case you override these methods.
-* Default script position for the `yii\web\View::registerJs()` changed to `View::POS_END`.
-* Package "ezyang/htmlpurifier" has been made optional and is not installed by default. If you need to use
-  `yii\helpers\HtmlPurifier` or `yii\i18n\Formatter::asHtml()` (e.g. 'html' data format), you'll have to install
-  this package manually for your project.
-* `yii\BaseYii::powered()` method has been removed. Please add "Powered by Yii" link either right into HTML or using
-  `yii\helpers\Html::a()`.
-* `yii\i18n\MessageFormatter` no longer supports parameter names with `.`, `-`, `=` and other symbols that are used in
-  pattern syntax following directly how it works in intl/ICU. If you use such parameters names, replace special
-  symbols with `_`.
-* `yii\i18n\MessageFormatter::parse()` method was removed. If you have a rare case where it's used copy-paste it from
-  2.0 branch to your project. 
+* `yii\filters\PageCache::$cacheHeaders` now takes a case-sensitive list of header names since PageCache is no longer 
+  storing the normalized (lowercase) versions of them so make sure this list is properly updated and your page cache 
+  is recreated.
 
+Upgrade from Yii 2.0.43
+-----------------------
+
+* `Json::encode()` can now handle zero-indexed objects in same way as `json_encode()` and keep them as objects. In order 
+  to avoid breaking backwards compatibility this behavior could be enabled by a new option flag but is disabled by default.
+  * Set `yii/helpers/Json::$keepObjectType = true` anywhere in your application code
+  * Or configure json response formatter to enable it for all JSON responses:
+      ```php
+      'response' => [
+        'formatters' => [
+          \yii\web\Response::FORMAT_JSON => [
+            'class' => 'yii\web\JsonResponseFormatter',
+            'prettyPrint' => YII_DEBUG, // use "pretty" output in debug mode
+            'keepObjectType' => true, // keep object type for zero-indexed objects
+          ],
+        ],
+      ],
+      ```
+* `yii\caching\Cache::multiSet()` now uses the default cache duration (`yii\caching\Cache::$defaultDuration`) when no 
+  duration is provided. A duration of 0 should be explicitly passed if items should not expire.
+
+Upgrade from Yii 2.0.42
+-----------------------
+
+* `yii\base\ErrorHandler` does not expose the `$_SERVER` information implicitly anymore.
+* The methods `phpTypecast()` and `dbTypecast()` of `yii\db\ColumnSchema` will no longer convert `$value` from `int` to 
+  `string`, if database column type is `INTEGER UNSIGNED` or `BIGINT UNSIGNED`.
+  * I.e. it affects update and insert queries. For example:
+  ```php
+  \Yii::$app->db->createCommand()->insert('{{some_table}}', ['int_unsigned_col' => 22])->execute();
+  ```
+  will execute next SQL:
+  ```sql
+  INSERT INTO `some_table` (`int_unsigned_col`) VALUES (22)
+  ```
+* Property `yii\db\ColumnSchemaBuilder::$categoryMap` has been removed in favor of getter/setter methods `getCategoryMap()` 
+  and `setCategoryMap()`.
+
+Upgrade from Yii 2.0.41
+-----------------------
+
+* `NumberValidator` (`number`, `double`, `integer`) does not allow values with leading or terminating (non-trimmed) 
+  white spaces anymore. If your application expects non-trimmed values provided to this validator make sure to trim 
+  them first (i.e. by using `trim` / `filter` "validators").
+
+Upgrade from Yii 2.0.40
+-----------------------
+
+* The methods `getAuthKey()` and `validateAuthKey()` of `yii\web\IdentityInterface` are now also used to validate active
+  sessions (previously these methods were only used for cookie-based login). If your identity class does not properly
+  implement these methods yet, you should update it accordingly (an example can be found in the guide under
+  `Security` -> `Authentication`). Alternatively, you can simply return `null` in the `getAuthKey()` method to keep
+  the old behavior (that is, no validation of active sessions). Applications that change the underlying `authKey` of
+  an authenticated identity, should now call `yii\web\User::switchIdentity()`, `yii\web\User::login()`
+  or `yii\web\User::logout()` to recreate the active session with the new `authKey`.
+
+Upgrade from Yii 2.0.39.3
+-------------------------
+
+* Priority of processing `yii\base\Arrayable`, and `JsonSerializable` data has been reversed (`Arrayable` data is checked
+  first now) in `yii\base\Model`, and `yii\rest\Serializer`. If your application relies on the previous priority you need 
+  to fix it manually based on the complexity of desired (de)serialization result.
+
+Upgrade from Yii 2.0.38
+-----------------------
+
+* The storage structure of the file cache has been changed when you use `\yii\caching\FileCache::$keyPrefix`.
+It is worth warming up the cache again if there is a logical dependency when working with the file cache.
+
+* `yii\web\Session` now respects the 'session.use_strict_mode' ini directive.
+  In case you use a custom `Session` class and have overwritten the `Session::openSession()` and/or 
+  `Session::writeSession()` functions changes might be required:
+  * When in strict mode the `openSession()` function should check if the requested session id exists
+    (and mark it for forced regeneration if not).
+    For example, the `DbSession` does this at the beginning of the function as follows:
+    ```php
+    if ($this->getUseStrictMode()) {
+        $id = $this->getId();
+        if (!$this->getReadQuery($id)->exists()) {
+            //This session id does not exist, mark it for forced regeneration
+            $this->_forceRegenerateId = $id;
+        }
+    }
+    // ... normal function continues ...
+    ``` 
+  * When in strict mode the `writeSession()` function should ignore writing the session under the old id.
+    For example, the `DbSession` does this at the beginning of the function as follows:
+    ```php
+    if ($this->getUseStrictMode() && $id === $this->_forceRegenerateId) {
+        //Ignore write when forceRegenerate is active for this id
+        return true;
+    }
+    // ... normal function continues ...
+    ```
+  > Note: The sample code above is specific for the `yii\web\DbSession` class.
+    Make sure you use the correct implementation based on your parent class,
+    e.g. `yii\web\CacheSession`, `yii\redis\Session`, `yii\mongodb\Session`, etc.
+  
+  > Note: In case your custom functions call their `parent` functions, there are probably no changes needed to your 
+    code if those parents implement the `useStrictMode` checks.
+
+  > Warning: in case `openSession()` and/or `writeSession()` functions do not implement the `useStrictMode` code
+    the session could be stored under a malicious id without warning even if `useStrictMode` is enabled.
+
+Upgrade from Yii 2.0.37
+-----------------------
+
+* Resolving DI references inside of arrays in dependencies was made optional and turned off by default. In order
+  to turn it on, set `resolveArrays` of container instance to `true`.
+
+Upgrade from Yii 2.0.36
+-----------------------
+
+* `yii\db\Exception::getCode()` now returns full PDO code that is SQLSTATE string. If you have relied on comparing code
+  with an integer value, adjust your code.
+
+Upgrade from Yii 2.0.35
+-----------------------
+
+* Inline validator signature has been updated with 4th parameter `current`:
+
+  ```php
+  /**
+   * @param mixed $current the currently validated value of attribute
+   */
+  function ($attribute, $params, $validator, $current)
+  ```
+
+* Behavior of inline validator used as a rule of `EachValidator` has been changed - `$attribute` now refers to original
+  model's attribute and not its temporary counterpart:
+  
+  ```php
+  public $array_attribute = ['first', 'second'];
+
+  public function rules()
+  {
+      return [
+          ['array_attribute', 'each', 'rule' => ['customValidatingMethod']],
+      ];
+  }
+  
+  public function customValidatingMethod($attribute, $params, $validator, $current)
+  {
+      // $attribute === 'array_attribute' (as before)
+  
+      // now: $this->$attribute === ['first', 'second'] (on every iteration)
+      // previously:
+      // $this->$attribute === 'first' (on first iteration)
+      // $this->$attribute === 'second' (on second iteration)
+  
+      // use now $current instead
+      // $current === 'first' (on first iteration)
+      // $current === 'second' (on second iteration)
+  }
+  ```
+  
+* `$this` in an inline validator defined as closure now refers to model instance. If you need to access the object registering
+  the validator, pass its instance through use statement:
+  
+  ```php
+  $registrar = $this;
+  $validator = function($attribute, $params, $validator, $current) use ($registrar) {
+      // ...
+  }
+  ```
+  
+* Validator closure callbacks should not be declared as static.
+
+* If you have any controllers that override the `init()` method, make sure they are calling `parent::init()` at
+  the beginning, as demonstrated in the [component guide](https://www.yiiframework.com/doc/guide/2.0/en/concept-components).
+
+Upgrade from Yii 2.0.34
+-----------------------
+
+* `ExistValidator` used as a rule of `EachValidator` now requires providing `targetClass` explicitely and it's not possible to use it with `targetRelation` in
+  that configuration.
+  
+  ```php
+  public function rules()
+  {
+      return [
+          ['attribute', 'each', 'rule' => ['exist', 'targetClass' => static::className(), 'targetAttribute' => 'id']],
+      ];
+  }
+  ```
+
+Upgrade from Yii 2.0.32
+-----------------------
+
+* `yii\helpers\ArrayHelper::filter` now correctly filters data when passing a filter with more than 2 "levels",
+  e.g. `ArrayHelper::filter($myArray, ['A.B.C']`. Until Yii 2.0.32 all data after the 2nd level was returned,
+  please see the following example:
+  
+  ```php
+  $myArray = [
+      'A' => 1,
+      'B' => [
+          'C' => 1,
+          'D' => [
+              'E' => 1,
+              'F' => 2,
+          ]
+      ],
+  ];
+  ArrayHelper::filter($myArray, ['B.D.E']);
+  ```
+  
+  Before Yii 2.0.33 this would return
+  
+  ```php
+  [
+      'B' => [
+          'D' => [
+              'E' => 1,
+              'F' => 2, //Please note the unexpected inclusion of other elements
+          ],
+      ],
+  ]
+  ```
+
+  Since Yii 2.0.33 this returns
+
+  ```php
+  [
+      'B' => [
+          'D' => [
+              'E' => 1,
+          ],
+      ],
+  ]
+  ```
+  
+  Note: If you are only using up to 2 "levels" (e.g. `ArrayHelper::filter($myArray, ['A.B']`), this change has no impact.
+  
+* `UploadedFile` class `deleteTempFile()` and `isUploadedFile()` methods introduced in 2.0.32 were removed.
+
+* Exception will be thrown if `UrlManager::$cache` configuration is incorrect (previously misconfiguration was silently 
+  ignored and `UrlManager` continue to work without cache). Make sure that `UrlManager::$cache` is correctly configured 
+  or set it to `null` to explicitly disable cache.
+
+Upgrade from Yii 2.0.31
+-----------------------
+
+* `yii\filters\ContentNegotiator` now generates 406 'Not Acceptable' instead of 415 'Unsupported Media Type' on
+  content-type negotiation fail.
+
+Upgrade from Yii 2.0.30
+-----------------------
+* `yii\helpers\BaseInflector::slug()` now ensures there is no repeating $replacement string occurrences.
+  In case you rely on Yii 2.0.16 - 2.0.30 behavior, consider replacing `Inflector` with your own implementation.
+  
+  
+Upgrade from Yii 2.0.28
+-----------------------
+
+* `yii\helpers\Html::tag()` now generates boolean attributes
+  [according to HTML specification](https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attribute).
+  For `true` value attribute is present, for `false` value it is absent.  
+
+Upgrade from Yii 2.0.20
+-----------------------
+
+* `yii\db\Query::select()` and `addSelect()` now normalize the format that columns are stored in when saving them 
+  to `$this->select`, so code that works directly with that property may need to be modified.
+  
+  For the following code:
+  
+  ```php
+  $a = $query->select('*');
+  $b = $query->select('id, name');
+  ```
+  
+  The value was stored as is i.e.
+  
+  ```php
+  // a
+  ['*']
+  
+  // b
+  ['id', 'name']
+  ``` 
+  
+  Now it is stored as
+  
+  ```php
+  // a
+  ['*' => '*']
+  
+  // b
+  ['id' => 'id', 'name' => 'name']
+  ```
+
+Upgrade from Yii 2.0.16
+-----------------------
+
+* In case you have extended the `yii\web\DbSession` class you should check if your 
+  custom implementation is compatible with the new `yii\web\DbSession::$fields` attribute.
+  Especially when overriding the `yii\web\DbSession::writeSession($id, $data)` function.
 
 Upgrade from Yii 2.0.15
 -----------------------
@@ -194,6 +367,24 @@ Upgrade from Yii 2.0.15
   ```json
   "cebe/markdown": "~1.1.0",
   ```
+  
+* `yii\mutex\Mutex::acquire()` no longer returns `true` if lock is already acquired by the same component in the same process.
+  Make sure that you're not trying to acquire the same lock multiple times in a way that may create infinite loops, for example:
+    
+  ```php
+  if (Yii::$app->mutex->acquire('test')) {
+       while (!Yii::$app->mutex->acquire('test')) {
+           // `Yii::$app->mutex->acquire('test')` will always return `false` here, since lock is already acquired
+      }
+  }
+  ```
+  
+* Formatter methods `asInteger`, `asDecimal`, `asPercent`, and `asCurrency` are using now inner fallback methods to handle 
+  very big number values to counter inner PHP casting and floating point number presentation issues. Make sure to provide 
+  such values as string numbers.
+  
+* Active Record relations are now being reset when corresponding key fields are changed. If you have relied on the fact
+  that relations are never reloaded you have to adjust your code.
 
 
 Upgrade from Yii 2.0.14
@@ -263,7 +454,7 @@ Upgrade from Yii 2.0.13
 
 * `yii\db\PdoValue` class has been introduced to replace a special syntax that was used to declare PDO parameter type 
   when binding parameters to an SQL command, for example: `['value', \PDO::PARAM_STR]`.
-  You should use `new PdoValue('value', \PDO::PARAM_STR)` instead. Old syntax will be removed in Yii 3.0.
+  You should use `new PdoValue('value', \PDO::PARAM_STR)` instead. Old syntax will be removed in Yii 2.1.
 
 * `yii\db\QueryBuilder::conditionBuilders` property and method-based condition builders are no longer used. 
   Class-based conditions and builders are introduced instead to provide more flexibility, extensibility and
@@ -277,16 +468,19 @@ Upgrade from Yii 2.0.13
 
 * Log targets (like `yii\log\EmailTarget`) are now throwing `yii\log\LogRuntimeException` in case log can not be properly exported.
 
-* You can start preparing your application for Yii 3.0 by doing the following:
+* You can start preparing your application for Yii 2.1 by doing the following:
 
   - Replace `::className()` calls with `::class` (if you’re running PHP 5.5+).
   - Replace usages of `yii\base\InvalidParamException` with `yii\base\InvalidArgumentException`.
   - Replace calls to `Yii::trace()` with `Yii::debug()`.
   - Remove calls to `yii\BaseYii::powered()`.
-  - If you are using XCache or Zend data cache, those are going away in 3.0 so you might want to start looking for an alternative.
+  - If you are using XCache or Zend data cache, those are going away in 2.1 so you might want to start looking for an alternative.
 
 * In case you aren't using CSRF cookies (REST APIs etc.) you should turn them off explicitly by setting
-  `\yii\web\Request::$enableCsrfCookie` to `false` in your config file. 
+  `\yii\web\Request::$enableCsrfCookie` to `false` in your config file.
+  
+* Previously headers sent after content output was started were silently ignored. This behavior was changed to throwing
+  `\yii\web\HeadersAlreadySentException`.
 
 Upgrade from Yii 2.0.12
 -----------------------
@@ -353,11 +547,11 @@ Upgrade from Yii 2.0.12
     compatible with the method added by Yii.
   - Otherwise this method is implemented in the `yii\base\Model`, so the change only affects your code if you implement `ActiveRecordInterface`
     in a class that does not extend `Model`. You may use `yii\base\StaticInstanceTrait` to implement it.
+    
+* Fixed built-in validator creating when model has a method with the same name. 
 
-* Fixed built-in validator creating when model has a method with the same name.
-
-  It is documented, that for the validation rules declared in model by `yii\base\Model::rules()`, validator can be either
-  a built-in validator name, a method name of the model class, an anonymous function, or a validator class name.
+  It is documented, that for the validation rules declared in model by `yii\base\Model::rules()`, validator can be either 
+  a built-in validator name, a method name of the model class, an anonymous function, or a validator class name. 
   Before this change behavior was inconsistent with the documentation: method in the model had higher priority, than
   a built-in validator. In case you have relied on this behavior, make sure to fix it.
 
@@ -665,7 +859,7 @@ Upgrade from Yii 2.0 Beta
   You can add it with `ALTER TABLE log ADD COLUMN prefix TEXT AFTER log_time;`.
 
 * The `fileinfo` PHP extension is now required by Yii. If you use  `yii\helpers\FileHelper::getMimeType()`, make sure
-  you have enabled this extension. This extension is [builtin](http://www.php.net/manual/en/fileinfo.installation.php) in php above `5.3`.
+  you have enabled this extension. This extension is [builtin](https://www.php.net/manual/en/fileinfo.installation.php) in php above `5.3`.
 
 * Please update your main layout file by adding this line in the `<head>` section: `<?= Html::csrfMetaTags() ?>`.
   This change is needed because `yii\web\View` no longer automatically generates CSRF meta tags due to issue #3358.

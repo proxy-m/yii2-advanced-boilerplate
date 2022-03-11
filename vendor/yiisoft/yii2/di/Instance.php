@@ -7,6 +7,7 @@
 
 namespace yii\di;
 
+use Exception;
 use Yii;
 use yii\base\InvalidConfigException;
 
@@ -26,11 +27,11 @@ use yii\base\InvalidConfigException;
  * ```php
  * $container = new \yii\di\Container;
  * $container->set('cache', [
- *     '__class' => \yii\caching\DbCache::class,
+ *     'class' => 'yii\caching\DbCache',
  *     'db' => Instance::of('db')
  * ]);
  * $container->set('db', [
- *     '__class' => \yii\db\Connection::class,
+ *     'class' => 'yii\db\Connection',
  *     'dsn' => 'sqlite:path/to/file.db',
  * ]);
  * ```
@@ -45,7 +46,7 @@ use yii\base\InvalidConfigException;
  *     public function init()
  *     {
  *         parent::init();
- *         $this->db = Instance::ensure($this->db, \yii\db\Connection::class);
+ *         $this->db = Instance::ensure($this->db, 'yii\db\Connection');
  *     }
  * }
  * ```
@@ -59,25 +60,32 @@ class Instance
      * @var string the component ID, class name, interface name or alias name
      */
     public $id;
+    /**
+     * @var bool if null should be returned instead of throwing an exception
+     */
+    public $optional;
 
 
     /**
      * Constructor.
      * @param string $id the component ID
+     * @param bool $optional if null should be returned instead of throwing an exception
      */
-    protected function __construct($id)
+    protected function __construct($id, $optional = false)
     {
         $this->id = $id;
+        $this->optional = $optional;
     }
 
     /**
      * Creates a new Instance object.
      * @param string $id the component ID
+     * @param bool $optional if null should be returned instead of throwing an exception
      * @return Instance the new Instance object.
      */
-    public static function of($id)
+    public static function of($id, $optional = false)
     {
-        return new static($id);
+        return new static($id, $optional);
     }
 
     /**
@@ -111,20 +119,11 @@ class Instance
     public static function ensure($reference, $type = null, $container = null)
     {
         if (is_array($reference)) {
-            $class = $type;
-            if (isset($reference['__class'])) {
-                $class = $reference['__class'];
-                unset($reference['__class']);
-            }
-            if (isset($reference['class'])) {
-                // @todo remove fallback
-                $class = $reference['class'];
-                unset($reference['class']);
-            }
-
+            $class = isset($reference['class']) ? $reference['class'] : $type;
             if (!$container instanceof Container) {
                 $container = Yii::$container;
             }
+            unset($reference['class']);
             $component = $container->get($class, [], $reference);
             if ($type === null || $component instanceof $type) {
                 return $component;
@@ -166,14 +165,21 @@ class Instance
      */
     public function get($container = null)
     {
-        if ($container) {
-            return $container->get($this->id);
-        }
-        if (Yii::$app && Yii::$app->has($this->id)) {
-            return Yii::$app->get($this->id);
-        }
+        try {
+            if ($container) {
+                return $container->get($this->id);
+            }
+            if (Yii::$app && Yii::$app->has($this->id)) {
+                return Yii::$app->get($this->id);
+            }
 
-        return Yii::$container->get($this->id);
+            return Yii::$container->get($this->id);
+        } catch (Exception $e) {
+            if ($this->optional) {
+                return null;
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -182,7 +188,7 @@ class Instance
      * @param array $state
      * @return Instance
      * @throws InvalidConfigException when $state property does not contain `id` parameter
-     * @see var_export()
+     * @see https://www.php.net/manual/en/function.var-export.php
      * @since 2.0.12
      */
     public static function __set_state($state)

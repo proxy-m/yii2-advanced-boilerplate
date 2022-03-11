@@ -7,18 +7,16 @@
 
 namespace yii\web;
 
-use Yii;
 use yii\base\BaseObject;
 use yii\helpers\ArrayHelper;
 use yii\helpers\StringHelper;
-use yii\http\ResourceStream;
 
 /**
  * MultipartFormDataParser parses content encoded as 'multipart/form-data'.
  * This parser provides the fallback for the 'multipart/form-data' processing on non POST requests,
  * for example: the one with 'PUT' request method.
  *
- * In order to enable this parser you should configure [[Request::$parsers]] in the following way:
+ * In order to enable this parser you should configure [[Request::parsers]] in the following way:
  *
  * ```php
  * return [
@@ -34,24 +32,29 @@ use yii\http\ResourceStream;
  * ];
  * ```
  *
- * Method [[parse()]] of this parser automatically populates [[Request::$uploadedFiles]] with the files parsed from raw body.
+ * Method [[parse()]] of this parser automatically populates `$_FILES` with the files parsed from raw body.
+ *
+ * > Note: since this is a request parser, it will initialize `$_FILES` values on [[Request::getBodyParams()]].
+ * Until this method is invoked, `$_FILES` array will remain empty even if there are submitted files in the
+ * request body. Make sure you have requested body params before any attempt to get uploaded file in case
+ * you are using this parser.
  *
  * Usage example:
  *
  * ```php
- * use yii\http\UploadedFile;
+ * use yii\web\UploadedFile;
  *
- * $restRequestData = Yii::$app->request->getParsedBody();
- * $uploadedFile = Yii::$app->request->getUploadedFileByName('photo');
+ * $restRequestData = Yii::$app->request->getBodyParams();
+ * $uploadedFile = UploadedFile::getInstancesByName('photo');
  *
  * $model = new Item();
  * $model->populate($restRequestData);
  * copy($uploadedFile->tempName, '/path/to/file/storage/photo.jpg');
  * ```
  *
- * > Note: although this parser populates temporary file name for the uploaded file instance, such temporary file will
- * not be recognized by PHP as uploaded one. Thus functions like `is_uploaded_file()` and `move_uploaded_file()` will
- * fail on it. This also means [[UploadedFile::saveAs()]] will fail as well.
+ * > Note: although this parser fully emulates regular structure of the `$_FILES`, related temporary
+ * files, which are available via `tmp_name` key, will not be recognized by PHP as uploaded ones.
+ * Thus functions like `is_uploaded_file()` and `move_uploaded_file()` will fail on them.
  *
  * @property int $uploadFileMaxCount Maximum upload files count.
  * @property int $uploadFileMaxSize Upload file max size in bytes.
@@ -65,7 +68,7 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
      * @var bool whether to parse raw body even for 'POST' request and `$_FILES` already populated.
      * By default this option is disabled saving performance for 'POST' requests, which are already
      * processed by PHP automatically.
-     * > Note: if this option is enabled, value of [[Request::$uploadedFiles]] will be reset on each parse.
+     * > Note: if this option is enabled, value of `$_FILES` will be reset on each parse.
      * @since 2.0.13
      */
     public $force = false;
@@ -106,7 +109,7 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
     public function getUploadFileMaxCount()
     {
         if ($this->_uploadFileMaxCount === null) {
-            $this->_uploadFileMaxCount = ini_get('max_file_uploads');
+            $this->_uploadFileMaxCount = (int)ini_get('max_file_uploads');
         }
 
         return $this->_uploadFileMaxCount;
@@ -123,28 +126,26 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
     /**
      * {@inheritdoc}
      */
-    public function parse($request)
+    public function parse($rawBody, $contentType)
     {
         if (!$this->force) {
             if (!empty($_POST) || !empty($_FILES)) {
                 // normal POST request is parsed by PHP automatically
                 return $_POST;
             }
+        } else {
+            $_FILES = [];
         }
-
-        $uploadedFiles = [];
-
-        $contentType = $request->getContentType();
-        $rawBody = $request->getBody()->__toString();
 
         if (empty($rawBody)) {
             return [];
         }
 
-        if (!preg_match('/boundary=(.*)$/is', $contentType, $matches)) {
+        if (!preg_match('/boundary="?(.*)"?$/is', $contentType, $matches)) {
             return [];
         }
-        $boundary = $matches[1];
+
+        $boundary = trim($matches[1], '"');
 
         $bodyParts = preg_split('/\\R?-+' . preg_quote($boundary, '/') . '/s', $rawBody);
         array_pop($bodyParts); // last block always has no data, contains boundary ending like `--`
@@ -155,7 +156,7 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
             if (empty($bodyPart)) {
                 continue;
             }
-            [$headers, $value] = preg_split('/\\R\\R/', $bodyPart, 2);
+            list($headers, $value) = preg_split('/\\R\\R/', $bodyPart, 2);
             $headers = $this->parseHeaders($headers);
 
             if (!isset($headers['content-disposition']['name'])) {
@@ -168,36 +169,36 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
                     continue;
                 }
 
-                $fileConfig = [
-                    '__class' => $request->uploadedFileClass,
-                    'clientFilename' => $headers['content-disposition']['filename'],
-                    'clientMediaType' => ArrayHelper::getValue($headers, 'content-type', 'application/octet-stream'),
+                $fileInfo = [
+                    'name' => $headers['content-disposition']['filename'],
+                    'type' => ArrayHelper::getValue($headers, 'content-type', 'application/octet-stream'),
                     'size' => StringHelper::byteLength($value),
                     'error' => UPLOAD_ERR_OK,
-                    'tempFilename' => null,
+                    'tmp_name' => null,
                 ];
 
-                if ($fileConfig['size'] > $this->getUploadFileMaxSize()) {
-                    $fileConfig['error'] = UPLOAD_ERR_INI_SIZE;
+                if ($fileInfo['size'] > $this->getUploadFileMaxSize()) {
+                    $fileInfo['error'] = UPLOAD_ERR_INI_SIZE;
                 } else {
                     $tmpResource = tmpfile();
                     if ($tmpResource === false) {
-                        $fileConfig['error'] = UPLOAD_ERR_CANT_WRITE;
+                        $fileInfo['error'] = UPLOAD_ERR_CANT_WRITE;
                     } else {
                         $tmpResourceMetaData = stream_get_meta_data($tmpResource);
                         $tmpFileName = $tmpResourceMetaData['uri'];
                         if (empty($tmpFileName)) {
-                            $fileConfig['error'] = UPLOAD_ERR_CANT_WRITE;
+                            $fileInfo['error'] = UPLOAD_ERR_CANT_WRITE;
                             @fclose($tmpResource);
                         } else {
                             fwrite($tmpResource, $value);
-                            $fileConfig['tempFilename'] = $tmpFileName;
-                            $fileConfig['stream'] = new ResourceStream(['resource' => $tmpResource]); // save file resource, otherwise it will be deleted
+                            rewind($tmpResource);
+                            $fileInfo['tmp_name'] = $tmpFileName;
+                            $fileInfo['tmp_resource'] = $tmpResource; // save file resource, otherwise it will be deleted
                         }
                     }
                 }
 
-                $this->addValue($uploadedFiles, $headers['content-disposition']['name'], Yii::createObject($fileConfig));
+                $this->addFile($_FILES, $headers['content-disposition']['name'], $fileInfo);
 
                 $filesCount++;
             } else {
@@ -206,9 +207,7 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
             }
         }
 
-        $request->setUploadedFiles($uploadedFiles);
-
-        return ArrayHelper::merge($bodyParams, $uploadedFiles);
+        return $bodyParams;
     }
 
     /**
@@ -219,13 +218,13 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
     private function parseHeaders($headerContent)
     {
         $headers = [];
-        $headerParts = preg_split('/\\R/s', $headerContent, -1, PREG_SPLIT_NO_EMPTY);
+        $headerParts = preg_split('/\\R/su', $headerContent, -1, PREG_SPLIT_NO_EMPTY);
         foreach ($headerParts as $headerPart) {
             if (strpos($headerPart, ':') === false) {
                 continue;
             }
 
-            [$headerName, $headerValue] = explode(':', $headerPart, 2);
+            list($headerName, $headerValue) = explode(':', $headerPart, 2);
             $headerName = strtolower(trim($headerName));
             $headerValue = trim($headerValue);
 
@@ -238,7 +237,7 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
                     if (strpos($part, '=') === false) {
                         $headers[$headerName][] = $part;
                     } else {
-                        [$name, $value] = explode('=', $part, 2);
+                        list($name, $value) = explode('=', $part, 2);
                         $name = strtolower(trim($name));
                         $value = trim(trim($value), '"');
                         $headers[$headerName][$name] = $value;
@@ -275,6 +274,65 @@ class MultipartFormDataParser extends BaseObject implements RequestParserInterfa
             }
         }
         $current = $value;
+    }
+
+    /**
+     * Adds file info to the uploaded files array by input name, e.g. `Item[file]`.
+     * @param array $files array containing uploaded files
+     * @param string $name input name specification.
+     * @param array $info file info.
+     */
+    private function addFile(&$files, $name, $info)
+    {
+        if (strpos($name, '[') === false) {
+            $files[$name] = $info;
+            return;
+        }
+
+        $fileInfoAttributes = [
+            'name',
+            'type',
+            'size',
+            'error',
+            'tmp_name',
+            'tmp_resource',
+        ];
+
+        $nameParts = preg_split('/\\]\\[|\\[/s', $name);
+        $baseName = array_shift($nameParts);
+        if (!isset($files[$baseName])) {
+            $files[$baseName] = [];
+            foreach ($fileInfoAttributes as $attribute) {
+                $files[$baseName][$attribute] = [];
+            }
+        } else {
+            foreach ($fileInfoAttributes as $attribute) {
+                $files[$baseName][$attribute] = (array) $files[$baseName][$attribute];
+            }
+        }
+
+        foreach ($fileInfoAttributes as $attribute) {
+            if (!isset($info[$attribute])) {
+                continue;
+            }
+
+            $current = &$files[$baseName][$attribute];
+            foreach ($nameParts as $namePart) {
+                $namePart = trim($namePart, ']');
+                if ($namePart === '') {
+                    $current[] = [];
+                    $keys = array_keys($current);
+                    $lastKey = array_pop($keys);
+                    $current = &$current[$lastKey];
+                } else {
+                    if (!isset($current[$namePart])) {
+                        $current[$namePart] = [];
+                    }
+                    $current = &$current[$namePart];
+                }
+            }
+            $current = $info[$attribute];
+        }
     }
 
     /**

@@ -25,27 +25,27 @@ class BaseMarkdown
      */
     public static $flavors = [
         'original' => [
-            '__class' => \cebe\markdown\Markdown::class,
+            'class' => 'cebe\markdown\Markdown',
             'html5' => true,
         ],
         'gfm' => [
-            '__class' => \cebe\markdown\GithubMarkdown::class,
+            'class' => 'cebe\markdown\GithubMarkdown',
             'html5' => true,
         ],
         'gfm-comment' => [
-            '__class' => \cebe\markdown\GithubMarkdown::class,
+            'class' => 'cebe\markdown\GithubMarkdown',
             'html5' => true,
             'enableNewlines' => true,
         ],
         'extra' => [
-            '__class' => \cebe\markdown\MarkdownExtra::class,
+            'class' => 'cebe\markdown\MarkdownExtra',
             'html5' => true,
         ],
     ];
     /**
      * @var string the markdown flavor to use when none is specified explicitly.
      * Defaults to `original`.
-     * @see $flavors
+     * @see flavors
      */
     public static $defaultFlavor = 'original';
 
@@ -57,7 +57,7 @@ class BaseMarkdown
      * @param string $flavor the markdown flavor to use. See [[$flavors]] for available values.
      * Defaults to [[$defaultFlavor]], if not set.
      * @return string the parsed HTML output
-     * @throws \yii\base\InvalidArgumentException when an undefined flavor is given.
+     * @throws InvalidArgumentException when an undefined flavor is given.
      */
     public static function process($markdown, $flavor = null)
     {
@@ -75,7 +75,7 @@ class BaseMarkdown
      * @param string $flavor the markdown flavor to use. See [[$flavors]] for available values.
      * Defaults to [[$defaultFlavor]], if not set.
      * @return string the parsed HTML output
-     * @throws \yii\base\InvalidArgumentException when an undefined flavor is given.
+     * @throws InvalidArgumentException when an undefined flavor is given.
      */
     public static function processParagraph($markdown, $flavor = null)
     {
@@ -88,7 +88,7 @@ class BaseMarkdown
      * @param string $flavor the markdown flavor to use. See [[$flavors]] for available values.
      * Defaults to [[$defaultFlavor]], if not set.
      * @return \cebe\markdown\Parser
-     * @throws \yii\base\InvalidArgumentException when an undefined flavor is given.
+     * @throws InvalidArgumentException when an undefined flavor is given.
      */
     protected static function getParser($flavor)
     {

@@ -13,8 +13,8 @@ use yii\base\BaseObject;
 /**
  * CompositeUrlRule is the base class for URL rule classes that consist of multiple simpler rules.
  *
- * @property null|int $createUrlStatus Status of the URL creation after the last [[createUrl()]] call. `null`
- * if rule does not provide info about create status. This property is read-only.
+ * @property-read null|int $createUrlStatus Status of the URL creation after the last [[createUrl()]] call.
+ * `null` if rule does not provide info about create status.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -60,7 +60,7 @@ abstract class CompositeUrlRule extends BaseObject implements UrlRuleInterface
                 Yii::debug([
                     'rule' => method_exists($rule, '__toString') ? $rule->__toString() : get_class($rule),
                     'match' => $result !== false,
-                    'parent' => self::class
+                    'parent' => self::className(),
                 ], __METHOD__);
             }
             if ($result !== false) {
@@ -132,8 +132,8 @@ abstract class CompositeUrlRule extends BaseObject implements UrlRuleInterface
      *
      * @return null|int Status of the URL creation after the last [[createUrl()]] call. `null` if rule does not provide
      * info about create status.
-     * @see $createStatus
-     * @see http://php.net/manual/en/language.operators.bitwise.php
+     * @see createStatus
+     * @see https://www.php.net/manual/en/language.operators.bitwise.php
      * @since 2.0.12
      */
     public function getCreateUrlStatus()

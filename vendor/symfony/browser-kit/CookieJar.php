@@ -46,13 +46,13 @@ class CookieJar
         foreach ($this->cookieJar as $cookieDomain => $pathCookies) {
             if ($cookieDomain && $domain) {
                 $cookieDomain = '.'.ltrim($cookieDomain, '.');
-                if (!str_ends_with('.'.$domain, $cookieDomain)) {
+                if ($cookieDomain !== substr('.'.$domain, -\strlen($cookieDomain))) {
                     continue;
                 }
             }
 
             foreach ($pathCookies as $cookiePath => $namedCookies) {
-                if (!str_starts_with($path, $cookiePath)) {
+                if (0 !== strpos($path, $cookiePath)) {
                     continue;
                 }
                 if (isset($namedCookies[$name])) {
@@ -60,8 +60,6 @@ class CookieJar
                 }
             }
         }
-
-        return null;
     }
 
     /**
@@ -113,8 +111,8 @@ class CookieJar
     /**
      * Updates the cookie jar from a response Set-Cookie headers.
      *
-     * @param string[] $setCookies Set-Cookie headers from an HTTP response
-     * @param string   $uri        The base URL
+     * @param array  $setCookies Set-Cookie headers from an HTTP response
+     * @param string $uri        The base URL
      */
     public function updateFromSetCookie(array $setCookies, $uri = null)
     {
@@ -142,7 +140,8 @@ class CookieJar
     /**
      * Updates the cookie jar from a Response object.
      *
-     * @param string $uri The base URL
+     * @param Response $response A Response object
+     * @param string   $uri      The base URL
      */
     public function updateFromResponse(Response $response, $uri = null)
     {

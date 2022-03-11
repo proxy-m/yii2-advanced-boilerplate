@@ -20,8 +20,8 @@ use yii\widgets\FragmentCache;
  *
  * For more details and usage information on View, see the [guide article on views](guide:structure-views).
  *
- * @property string|bool $viewFile The view file currently being rendered. False if no view file is being
- * rendered. This property is read-only.
+ * @property-read string|bool $viewFile The view file currently being rendered. False if no view file is being
+ * rendered.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -50,7 +50,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public $context;
     /**
-     * @var mixed custom parameters that are shared among view templates.
+     * @var array custom parameters that are shared among view templates.
      */
     public $params = [];
     /**
@@ -60,8 +60,8 @@ class View extends Component implements DynamicContentAwareInterface
      *
      * ```php
      * [
-     *     'tpl' => ['__class' => \yii\smarty\ViewRenderer::class],
-     *     'twig' => ['__class' => \yii\twig\ViewRenderer::class],
+     *     'tpl' => ['class' => 'yii\smarty\ViewRenderer'],
+     *     'twig' => ['class' => 'yii\twig\ViewRenderer'],
      * ]
      * ```
      *
@@ -86,13 +86,22 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public $blocks;
     /**
-     * @var DynamicContentAwareInterface[] a list of currently active dynamic content class instances.
+     * @var array|DynamicContentAwareInterface[] a list of currently active dynamic content class instances.
+     * This property is used internally to implement the dynamic content caching feature. Do not modify it directly.
+     * @internal
+     * @deprecated Since 2.0.14. Do not use this property directly. Use methods [[getDynamicContents()]],
+     * [[pushDynamicContent()]], [[popDynamicContent()]] instead.
      */
-    private $_cacheStack = [];
+    public $cacheStack = [];
     /**
-     * @var array a list of placeholders for embedding dynamic contents.
+     * @var array a list of placeholders for embedding dynamic contents. This property
+     * is used internally to implement the content caching feature. Do not modify it directly.
+     * @internal
+     * @deprecated Since 2.0.14. Do not use this property directly. Use methods [[getDynamicPlaceholders()]],
+     * [[setDynamicPlaceholders()]], [[addDynamicPlaceholder()]] instead.
      */
-    private $_dynamicPlaceholders = [];
+    public $dynamicPlaceholders = [];
+
     /**
      * @var array the view files currently being rendered. There may be multiple view files being
      * rendered at a moment because one view may be rendered within another.
@@ -107,8 +116,8 @@ class View extends Component implements DynamicContentAwareInterface
     {
         parent::init();
         if (is_array($this->theme)) {
-            if (!isset($this->theme['__class'])) {
-                $this->theme['__class'] = Theme::class;
+            if (!isset($this->theme['class'])) {
+                $this->theme['class'] = 'yii\base\Theme';
             }
             $this->theme = Yii::createObject($this->theme);
         } elseif (is_string($this->theme)) {
@@ -307,10 +316,10 @@ class View extends Component implements DynamicContentAwareInterface
             $event = new ViewEvent([
                 'viewFile' => $viewFile,
                 'params' => $params,
-                'output' => $output,
             ]);
+            $event->output =& $output;
+
             $this->trigger(self::EVENT_AFTER_RENDER, $event);
-            $output = $event->output;
         }
     }
 
@@ -327,7 +336,6 @@ class View extends Component implements DynamicContentAwareInterface
      * @param array $_params_ the parameters (name-value pairs) that will be extracted and made available in the view file.
      * @return string the rendering result
      * @throws \Exception
-     * @throws \Throwable
      */
     public function renderPhpFile($_file_, $_params_ = [])
     {
@@ -338,6 +346,13 @@ class View extends Component implements DynamicContentAwareInterface
         try {
             require $_file_;
             return ob_get_clean();
+        } catch (\Exception $e) {
+            while (ob_get_level() > $_obInitialLevel_) {
+                if (!@ob_end_clean()) {
+                    ob_clean();
+                }
+            }
+            throw $e;
         } catch (\Throwable $e) {
             while (ob_get_level() > $_obInitialLevel_) {
                 if (!@ob_end_clean()) {
@@ -352,30 +367,20 @@ class View extends Component implements DynamicContentAwareInterface
      * Renders dynamic content returned by the given PHP statements.
      * This method is mainly used together with content caching (fragment caching and page caching)
      * when some portions of the content (called *dynamic content*) should not be cached.
-     * The dynamic content must be returned by some PHP statements. You can optionally pass
-     * additional parameters that will be available as variables in the PHP statement:
-     *
-     * ```php
-     * <?= $this->renderDynamic('return foo($myVar);', [
-     *     'myVar' => $model->getMyComplexVar(),
-     * ]) ?>
-     * ```
+     * The dynamic content must be returned by some PHP statements.
      * @param string $statements the PHP statements for generating the dynamic content.
-     * @param array $params the parameters (name-value pairs) that will be extracted and made
-     * available in the $statement context. The parameters will be stored in the cache and be reused
-     * each time $statement is executed. You should make sure, that these are safely serializable.
-     * @throws \yii\base\ErrorException if the statement throws an exception in eval()
      * @return string the placeholder of the dynamic content, or the dynamic content if there is no
      * active content cache currently.
+     *
+     * Note that most methods that indirectly modify layout such as registerJS() or registerJSFile() do not
+     * work with dynamic rendering.
+     *
+     * @see https://github.com/yiisoft/yii2/issues/17673
      */
-    public function renderDynamic($statements, array $params = [])
+    public function renderDynamic($statements)
     {
-        if (!empty($params)) {
-            $statements = 'extract(unserialize(\'' . str_replace(['\\', '\'' ], ['\\\\', '\\\'' ], serialize($params)) . '\'));' . $statements;
-        }
-
-        if (!empty($this->_cacheStack)) {
-            $n = count($this->_dynamicPlaceholders);
+        if (!empty($this->cacheStack)) {
+            $n = count($this->dynamicPlaceholders);
             $placeholder = "<![CDATA[YII-DYNAMIC-$n]]>";
             $this->addDynamicPlaceholder($placeholder, $statements);
 
@@ -390,7 +395,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function getDynamicPlaceholders()
     {
-        return $this->_dynamicPlaceholders;
+        return $this->dynamicPlaceholders;
     }
 
     /**
@@ -398,7 +403,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function setDynamicPlaceholders($placeholders)
     {
-        $this->_dynamicPlaceholders = $placeholders;
+        $this->dynamicPlaceholders = $placeholders;
     }
 
     /**
@@ -406,12 +411,16 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function addDynamicPlaceholder($placeholder, $statements)
     {
-        foreach ($this->_cacheStack as $cache) {
-            $cache->addDynamicPlaceholder($placeholder, $statements);
+        foreach ($this->cacheStack as $cache) {
+            if ($cache instanceof DynamicContentAwareInterface) {
+                $cache->addDynamicPlaceholder($placeholder, $statements);
+            } else {
+                // TODO: Remove in 2.1
+                $cache->dynamicPlaceholders[$placeholder] = $statements;
+            }
         }
-
-        $this->_dynamicPlaceholders[$placeholder] = $statements;
-    }
+        $this->dynamicPlaceholders[$placeholder] = $statements;
+}
 
     /**
      * Evaluates the given PHP statements.
@@ -431,7 +440,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function getDynamicContents()
     {
-        return $this->_cacheStack;
+        return $this->cacheStack;
     }
 
     /**
@@ -442,7 +451,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function pushDynamicContent(DynamicContentAwareInterface $instance)
     {
-        $this->_cacheStack[] = $instance;
+        $this->cacheStack[] = $instance;
     }
 
     /**
@@ -452,7 +461,7 @@ class View extends Component implements DynamicContentAwareInterface
      */
     public function popDynamicContent()
     {
-        array_pop($this->_cacheStack);
+        array_pop($this->cacheStack);
     }
 
     /**

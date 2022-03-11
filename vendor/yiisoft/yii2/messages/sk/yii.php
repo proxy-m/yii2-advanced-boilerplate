@@ -23,7 +23,6 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
-    'You should upload at least {limit, number} {limit, plural, one{file} other{files}}.' => 'Je potrebné nahrať aspoň {limit, number} {limit, plural, =1{súbor} =2{súbory} =3{súbory} =4{súbory} other{súborov}}.',
     ' and ' => ' a ',
     '"{attribute}" does not support operator "{operator}".' => '"{attribute}" nepodporuje operátor "{operator}".',
     '(not set)' => '(nie je nastavené)',
@@ -47,7 +46,8 @@ return [
     'Page not found.' => 'Stránka nebola nájdená.',
     'Please fix the following errors:' => 'Opravte prosím nasledujúce chyby:',
     'Please upload a file.' => 'Nahrajte prosím súbor.',
-    'Showing <b>{begin, number}-{end, number}</b> of <b>{totalCount, number}</b> {totalCount, plural, one{item} other{items}}.' => 'Zobrazujem <b>{begin, number}-{end, number}</b> z <b>{totalCount, number}</b> {totalCount, plural, one{záznam} other{záznamov}}.',
+    'Powered by {yii}' => 'Beží na {yii}',
+    'Showing <b>{begin, number}-{end, number}</b> of <b>{totalCount, number}</b> {totalCount, plural, one{item} other{items}}.' => 'Zobrazujem <b>{begin, number}-{end, number}</b> z <b>{totalCount, number}</b> záznamov.',
     'The combination {values} of {attributes} has already been taken.' => 'Kombinácia {values} pre {attributes} je už použitá.',
     'The file "{file}" is not an image.' => 'Súbor "{file}" nie je obrázok.',
     'The file "{file}" is too big. Its size cannot exceed {formattedLimit}.' => 'Súbor "{file}" je príliš veľký. Veľkosť súboru nesmie byť viac ako {formattedLimit}.',
@@ -71,6 +71,7 @@ return [
     'Yii Framework' => 'Yii Framework',
     'You are not allowed to perform this action.' => 'Nemáte oprávnenie pre požadovanú akciu.',
     'You can upload at most {limit, number} {limit, plural, one{file} other{files}}.' => 'Nahrať môžete najviac {limit, number} {limit, plural, =1{súbor} =2{súbory} =3{súbory} =4{súbory} other{súborov}}.',
+    'You should upload at least {limit, number} {limit, plural, one{file} other{files}}.' => 'Je potrebné nahrať aspoň {limit, number} {limit, plural, =1{súbor} =2{súbory} =3{súbory} =4{súbory} other{súborov}}.',
     'in {delta, plural, =1{a day} other{# days}}' => 'o {delta, plural, =1{deň} =2{dni} =3{dni} =4{dni} other{# dní}}',
     'in {delta, plural, =1{a minute} other{# minutes}}' => 'o {delta, plural, =1{minútu} =2{minúty} =3{minúty} =4{minúty} other{# minút}}',
     'in {delta, plural, =1{a month} other{# months}}' => 'o {delta, plural, =1{mesiac} =2{mesiace} =3{mesiace} =4{mesiace} other{# mesiacov}}',
@@ -122,7 +123,6 @@ return [
     '{nFormatted} B' => '{nFormatted} B',
     '{nFormatted} GB' => '{nFormatted} GB',
     '{nFormatted} GiB' => '{nFormatted} GiB',
-    '{nFormatted} KB' => '{nFormatted} KB',
     '{nFormatted} KiB' => '{nFormatted} KiB',
     '{nFormatted} MB' => '{nFormatted} MB',
     '{nFormatted} MiB' => '{nFormatted} MiB',
@@ -130,6 +130,7 @@ return [
     '{nFormatted} PiB' => '{nFormatted} PiB',
     '{nFormatted} TB' => '{nFormatted} TB',
     '{nFormatted} TiB' => '{nFormatted} TiB',
+    '{nFormatted} kB' => '{nFormatted} kB',
     '{nFormatted} {n, plural, =1{byte} other{bytes}}' => '{nFormatted} {n, plural, =1{bajt} =2{bajty} =3{bajty} =4{bajty} other{bajtov}}',
     '{nFormatted} {n, plural, =1{gibibyte} other{gibibytes}}' => '{nFormatted} {n, plural, =1{gibibajt} =2{gibibajty} =3{gibibajty} =4{gibibajty} other{gibibajtov}}',
     '{nFormatted} {n, plural, =1{gigabyte} other{gigabytes}}' => '{nFormatted} {n, plural, =1{gigabajt} =2{gigabajty} =3{gigabajty} =4{gigabajty} other{gigabajtov}}',
@@ -141,4 +142,7 @@ return [
     '{nFormatted} {n, plural, =1{petabyte} other{petabytes}}' => '{nFormatted} {n, plural, =1{petabajt} =2{petabajty} =3{petabajty} =4{petabajty} other{petabajtov}}',
     '{nFormatted} {n, plural, =1{tebibyte} other{tebibytes}}' => '{nFormatted} {n, plural, =1{tebibajt} =2{tebibajty} =3{tebibajty} =4{tebibajty} other{tebibajtov}}',
     '{nFormatted} {n, plural, =1{terabyte} other{terabytes}}' => '{nFormatted} {n, plural, =1{terabajt} =2{terabajty} =3{terabajty} =4{terabajty} other{terabajtov}}',
+    'Action not found.' => 'Akcia nebola nájdená.',
+    'Aliases available: {aliases}' => 'Dostupné aliasy: {aliases}',
+    'Options available: {options}' => 'Dostupné možnosti: {options}',
 ];

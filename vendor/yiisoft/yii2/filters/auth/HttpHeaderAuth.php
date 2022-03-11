@@ -17,7 +17,7 @@ namespace yii\filters\auth;
  * {
  *     return [
  *         'basicAuth' => [
- *             '__class' => \yii\filters\auth\HttpHeaderAuth::class,
+ *             'class' => \yii\filters\auth\HttpHeaderAuth::class,
  *         ],
  *     ];
  * }
@@ -48,7 +48,7 @@ class HttpHeaderAuth extends AuthMethod
      */
     public function authenticate($user, $request, $response)
     {
-        $authHeader = $request->getHeaderLine($this->header);
+        $authHeader = $request->getHeaders()->get($this->header);
 
         if ($authHeader !== null) {
             if ($this->pattern !== null) {

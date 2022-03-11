@@ -83,7 +83,7 @@ use yii\helpers\StringHelper;
  * ```php
  * [
  *     'as tree' => [
- *         '__class' => Tree::class,
+ *         'class' => 'Tree',
  *     ],
  * ]
  * ```
@@ -93,7 +93,7 @@ use yii\helpers\StringHelper;
  *
  * For more details and usage information on Component, see the [guide article on components](guide:concept-components).
  *
- * @property Behavior[] $behaviors List of behaviors attached to this component. This property is read-only.
+ * @property-read Behavior[] $behaviors List of behaviors attached to this component.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -222,7 +222,7 @@ class Component extends BaseObject
      * will be implicitly called when executing `isset($component->property)`.
      * @param string $name the property name or the event name
      * @return bool whether the named property is set
-     * @see http://php.net/manual/en/function.isset.php
+     * @see https://www.php.net/manual/en/function.isset.php
      */
     public function __isset($name)
     {
@@ -254,7 +254,7 @@ class Component extends BaseObject
      * will be implicitly called when executing `unset($component->property)`.
      * @param string $name the property name
      * @throws InvalidCallException if the property is read only.
-     * @see http://php.net/manual/en/function.unset.php
+     * @see https://www.php.net/manual/en/function.unset.php
      */
     public function __unset($name)
     {
@@ -294,7 +294,7 @@ class Component extends BaseObject
         $this->ensureBehaviors();
         foreach ($this->_behaviors as $object) {
             if ($object->hasMethod($name)) {
-                return $object->$name(...$params);
+                return call_user_func_array([$object, $name], $params);
             }
         }
         throw new UnknownMethodException('Calling unknown method: ' . get_class($this) . "::$name()");
@@ -302,20 +302,13 @@ class Component extends BaseObject
 
     /**
      * This method is called after the object is created by cloning an existing one.
-     * It clones all behaviors as well, and attaches them to the new object.
+     * It removes all behaviors because they are attached to the old object.
      */
     public function __clone()
     {
         $this->_events = [];
         $this->_eventWildcards = [];
-
-        if ($this->_behaviors !== null) {
-            $behaviors = $this->_behaviors;
-            $this->_behaviors = null;
-            foreach ($behaviors as $name => $behavior) {
-                $this->attachBehavior($name, clone $behavior);
-            }
-        }
+        $this->_behaviors = null;
     }
 
     /**
@@ -443,7 +436,7 @@ class Component extends BaseObject
      *
      * ```php
      * 'behaviorName' => [
-     *     '__class' => BehaviorClass::class,
+     *     'class' => 'BehaviorClass',
      *     'property1' => 'value1',
      *     'property2' => 'value2',
      * ]
@@ -471,13 +464,17 @@ class Component extends BaseObject
     {
         $this->ensureBehaviors();
 
+        if (!empty($this->_events[$name])) {
+            return true;
+        }
+
         foreach ($this->_eventWildcards as $wildcard => $handlers) {
             if (!empty($handlers) && StringHelper::matchWildcard($wildcard, $name)) {
                 return true;
             }
         }
 
-        return !empty($this->_events[$name]) || Event::hasHandlers($this, $name);
+        return Event::hasHandlers($this, $name);
     }
 
     /**
@@ -505,7 +502,7 @@ class Component extends BaseObject
      *
      * ```php
      * $component->on('event.group.*', function ($event) {
-     *     Yii::debug($event->name . ' is triggered.');
+     *     Yii::trace($event->name . ' is triggered.');
      * });
      * ```
      *
@@ -574,7 +571,7 @@ class Component extends BaseObject
             }
             if ($removed) {
                 $this->_events[$name] = array_values($this->_events[$name]);
-                return $removed;
+                return true;
             }
         }
 
@@ -600,10 +597,12 @@ class Component extends BaseObject
 
     /**
      * Triggers an event.
-     * This method represents the happening of an event. It invokes
-     * all attached handlers for the event including class-level handlers.
+     *
+     * This method represents the happening of an event. It invokes all attached handlers for the event
+     * including class-level handlers.
+     *
      * @param string $name the event name
-     * @param Event $event the event parameter. If not set, a default [[Event]] object will be created.
+     * @param Event|null $event the event instance. If not set, a default [[Event]] object will be created.
      */
     public function trigger($name, Event $event = null)
     {
@@ -612,15 +611,15 @@ class Component extends BaseObject
         $eventHandlers = [];
         foreach ($this->_eventWildcards as $wildcard => $handlers) {
             if (StringHelper::matchWildcard($wildcard, $name)) {
-                $eventHandlers = array_merge($eventHandlers, $handlers);
+                $eventHandlers[] = $handlers;
             }
         }
-
         if (!empty($this->_events[$name])) {
-            $eventHandlers = array_merge($eventHandlers, $this->_events[$name]);
+            $eventHandlers[] = $this->_events[$name];
         }
 
         if (!empty($eventHandlers)) {
+            $eventHandlers = call_user_func_array('array_merge', $eventHandlers);
             if ($event === null) {
                 $event = new Event();
             }

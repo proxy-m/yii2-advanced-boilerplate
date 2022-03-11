@@ -24,8 +24,9 @@ use yii\helpers\Json;
  *     // ...
  *     'formatters' => [
  *         \yii\web\Response::FORMAT_JSON => [
- *              '__class' => \yii\web\JsonResponseFormatter::class,
+ *              'class' => 'yii\web\JsonResponseFormatter',
  *              'prettyPrint' => YII_DEBUG, // use "pretty" output in debug mode
+ *              'keepObjectType' => false, // keep object type for zero-indexed objects
  *              // ...
  *         ],
  *     ],
@@ -67,7 +68,7 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
     public $useJsonp = false;
     /**
      * @var int the encoding options passed to [[Json::encode()]]. For more details please refer to
-     * <http://www.php.net/manual/en/function.json-encode.php>.
+     * <https://www.php.net/manual/en/function.json-encode.php>.
      * Default is `JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE`.
      * This property has no effect, when [[useJsonp]] is `true`.
      * @since 2.0.7
@@ -81,6 +82,13 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
      * @since 2.0.7
      */
     public $prettyPrint = false;
+    /**
+     * @var bool Avoids objects with zero-indexed keys to be encoded as array
+     * Json::encode((object)['test']) will be encoded as an object not array. This matches the behaviour of json_encode().
+     * Defaults to Json::$keepObjectType value
+     * @since 2.0.44
+     */
+    public $keepObjectType;
 
 
     /**
@@ -96,8 +104,8 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
         } elseif (strpos($this->contentType, 'charset') === false) {
             $this->contentType .= '; charset=UTF-8';
         }
-        $response->setHeader('Content-Type', $this->contentType);
-  
+        $response->getHeaders()->set('Content-Type', $this->contentType);
+
         if ($this->useJsonp) {
             $this->formatJsonp($response);
         } else {
@@ -116,7 +124,18 @@ class JsonResponseFormatter extends Component implements ResponseFormatterInterf
             if ($this->prettyPrint) {
                 $options |= JSON_PRETTY_PRINT;
             }
+
+            $default = Json::$keepObjectType;
+            if ($this->keepObjectType !== null) {
+                Json::$keepObjectType = $this->keepObjectType;
+            }
+
             $response->content = Json::encode($response->data, $options);
+
+            // Restore default value to avoid any unexpected behaviour
+            Json::$keepObjectType = $default;
+        } elseif ($response->content === null) {
+            $response->content = 'null';
         }
     }
 

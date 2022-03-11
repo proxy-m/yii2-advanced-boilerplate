@@ -49,42 +49,6 @@ class AssetConverter extends Component implements AssetConverterInterface
      * significantly degrade the performance.
      */
     public $forceConvert = false;
-    /**
-     * @var callable a PHP callback, which should be invoked to check whether asset conversion result is outdated.
-     * It will be invoked only if conversion target file exists and its modification time is older then the one of source file.
-     * Callback should match following signature:
-     *
-     * ```php
-     * function (string $basePath, string $sourceFile, string $targetFile, string $sourceExtension, string $targetExtension) : bool
-     * ```
-     *
-     * where $basePath is the asset source directory; $sourceFile is the asset source file path, relative to $basePath;
-     * $targetFile is the asset target file path, relative to $basePath; $sourceExtension is the source asset file extension
-     * and $targetExtension is the target asset file extension, respectively.
-     *
-     * It should return `true` is case asset should be reconverted.
-     * For example:
-     *
-     * ```php
-     * function ($basePath, $sourceFile, $targetFile, $sourceExtension, $targetExtension) {
-     *     if (YII_ENV !== 'dev') {
-     *         return false;
-     *     }
-     *
-     *     $resultModificationTime = @filemtime("$basePath/$result");
-     *     foreach (FileHelper::findFiles($basePath, ['only' => ["*.{$sourceExtension}"]]) as $filename) {
-     *         if ($resultModificationTime < @filemtime($filename)) {
-     *             return true;
-     *         }
-     *     }
-     *
-     *     return false;
-     * }
-     * ```
-     *
-     * @since 3.0.0
-     */
-    public $isOutdatedCallback;
 
 
     /**
@@ -97,11 +61,11 @@ class AssetConverter extends Component implements AssetConverterInterface
     {
         $pos = strrpos($asset, '.');
         if ($pos !== false) {
-            $srcExt = substr($asset, $pos + 1);
-            if (isset($this->commands[$srcExt])) {
-                [$ext, $command] = $this->commands[$srcExt];
+            $ext = substr($asset, $pos + 1);
+            if (isset($this->commands[$ext])) {
+                list($ext, $command) = $this->commands[$ext];
                 $result = substr($asset, 0, $pos + 1) . $ext;
-                if ($this->forceConvert || $this->isOutdated($basePath, $asset, $result, $srcExt, $ext)) {
+                if ($this->forceConvert || @filemtime("$basePath/$result") < @filemtime("$basePath/$asset")) {
                     $this->runCommand($command, $basePath, $asset, $result);
                 }
 
@@ -110,34 +74,6 @@ class AssetConverter extends Component implements AssetConverterInterface
         }
 
         return $asset;
-    }
-
-    /**
-     * Checks whether asset convert result is outdated, and thus should be reconverted.
-     * @param string $basePath the directory the $asset is relative to.
-     * @param string $sourceFile the asset source file path, relative to [[$basePath]].
-     * @param string $targetFile the converted asset file path, relative to [[$basePath]].
-     * @param string $sourceExtension source asset file extension.
-     * @param string $targetExtension target asset file extension.
-     * @return bool whether asset is outdated or not.
-     * @since 3.0.0
-     */
-    protected function isOutdated($basePath, $sourceFile, $targetFile, $sourceExtension, $targetExtension)
-    {
-        $resultModificationTime = @filemtime("$basePath/$targetFile");
-        if ($resultModificationTime === false || $resultModificationTime === null) {
-            return true;
-        }
-
-        if ($resultModificationTime < @filemtime("$basePath/$sourceFile")) {
-            return true;
-        }
-
-        if ($this->isOutdatedCallback === null) {
-            return false;
-        }
-
-        return call_user_func($this->isOutdatedCallback, $basePath, $sourceFile, $targetFile, $sourceExtension, $targetExtension);
     }
 
     /**

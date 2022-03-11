@@ -133,7 +133,7 @@ class ExitCode
         self::NOINPUT => 'Input file not found or unreadable',
         self::NOUSER => 'User not found',
         self::NOHOST => 'Host not found',
-        self::UNAVAILABLE => 'A requied service is unavailable',
+        self::UNAVAILABLE => 'A required service is unavailable',
         self::SOFTWARE => 'Internal error',
         self::OSERR => 'Error making system call or using OS service',
         self::OSFILE => 'Error accessing system file',
@@ -155,6 +155,6 @@ class ExitCode
      */
     public static function getReason($exitCode)
     {
-        return static::$reasons[$exitCode] ?? 'Unknown exit code';
+        return isset(static::$reasons[$exitCode]) ? static::$reasons[$exitCode] : 'Unknown exit code';
     }
 }

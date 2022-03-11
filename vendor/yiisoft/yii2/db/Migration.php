@@ -87,7 +87,7 @@ class Migration extends Component implements MigrationInterface
     public function init()
     {
         parent::init();
-        $this->db = Instance::ensure($this->db, Connection::class);
+        $this->db = Instance::ensure($this->db, Connection::className());
         $this->db->getSchema()->refresh();
         $this->db->enableSlaves = false;
     }
@@ -104,7 +104,7 @@ class Migration extends Component implements MigrationInterface
     /**
      * This method contains the logic to be executed when applying this migration.
      * Child classes may override this method to provide actual migration logic.
-     * @return bool return a false value to indicate the migration fails
+     * @return false|void|mixed return a false value to indicate the migration fails
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function up()
@@ -116,6 +116,10 @@ class Migration extends Component implements MigrationInterface
                 return false;
             }
             $transaction->commit();
+        } catch (\Exception $e) {
+            $this->printException($e);
+            $transaction->rollBack();
+            return false;
         } catch (\Throwable $e) {
             $this->printException($e);
             $transaction->rollBack();
@@ -129,7 +133,7 @@ class Migration extends Component implements MigrationInterface
      * This method contains the logic to be executed when removing this migration.
      * The default implementation throws an exception indicating the migration cannot be removed.
      * Child classes may override this method if the corresponding migrations can be removed.
-     * @return bool return a false value to indicate the migration fails
+     * @return false|void|mixed return a false value to indicate the migration fails
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function down()
@@ -141,6 +145,10 @@ class Migration extends Component implements MigrationInterface
                 return false;
             }
             $transaction->commit();
+        } catch (\Exception $e) {
+            $this->printException($e);
+            $transaction->rollBack();
+            return false;
         } catch (\Throwable $e) {
             $this->printException($e);
             $transaction->rollBack();
@@ -151,7 +159,7 @@ class Migration extends Component implements MigrationInterface
     }
 
     /**
-     * @param \Throwable $e
+     * @param \Throwable|\Exception $e
      */
     private function printException($e)
     {
@@ -169,7 +177,7 @@ class Migration extends Component implements MigrationInterface
      * Note: Not all DBMS support transactions. And some DB queries cannot be put into a transaction. For some examples,
      * please refer to [implicit commit](http://dev.mysql.com/doc/refman/5.7/en/implicit-commit.html).
      *
-     * @return bool return a false value to indicate the migration fails
+     * @return false|void|mixed return a false value to indicate the migration fails
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function safeUp()
@@ -186,7 +194,7 @@ class Migration extends Component implements MigrationInterface
      * Note: Not all DBMS support transactions. And some DB queries cannot be put into a transaction. For some examples,
      * please refer to [implicit commit](http://dev.mysql.com/doc/refman/5.7/en/implicit-commit.html).
      *
-     * @return bool return a false value to indicate the migration fails
+     * @return false|void|mixed return a false value to indicate the migration fails
      * and should not proceed further. All other return values mean the migration succeeds.
      */
     public function safeDown()

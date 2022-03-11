@@ -18,8 +18,8 @@ use yii\di\Instance;
 /**
  * FragmentCache is used by [[\yii\base\View]] to provide caching of page fragments.
  *
- * @property string|false $cachedContent The cached content. False is returned if valid content is not found
- * in the cache. This property is read-only.
+ * @property-read string|false $cachedContent The cached content. False is returned if valid content is not
+ * found in the cache.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -47,7 +47,7 @@ class FragmentCache extends Widget implements DynamicContentAwareInterface
      *
      * ```php
      * [
-     *     '__class' => \yii\caching\DbDependency::class,
+     *     'class' => 'yii\caching\DbDependency',
      *     'sql' => 'SELECT MAX(updated_at) FROM post',
      * ]
      * ```
@@ -83,7 +83,7 @@ class FragmentCache extends Widget implements DynamicContentAwareInterface
     {
         parent::init();
 
-        $this->cache = $this->enabled ? Instance::ensure($this->cache, CacheInterface::class) : null;
+        $this->cache = $this->enabled ? Instance::ensure($this->cache, 'yii\caching\CacheInterface') : null;
 
         if ($this->cache instanceof CacheInterface && $this->getCachedContent() === false) {
             $this->getView()->pushDynamicContent($this);
@@ -97,27 +97,25 @@ class FragmentCache extends Widget implements DynamicContentAwareInterface
      * Content displayed before this method call and after [[init()]]
      * will be captured and saved in cache.
      * This method does nothing if valid content is already found in cache.
-     * @return string the result of widget execution to be outputted.
      */
     public function run()
     {
         if (($content = $this->getCachedContent()) !== false) {
-            return $content;
+            echo $content;
         } elseif ($this->cache instanceof CacheInterface) {
             $this->getView()->popDynamicContent();
 
             $content = ob_get_clean();
             if ($content === false || $content === '') {
-                return '';
+                return;
             }
             if (is_array($this->dependency)) {
                 $this->dependency = Yii::createObject($this->dependency);
             }
             $data = [$content, $this->getDynamicPlaceholders()];
             $this->cache->set($this->calculateKey(), $data, $this->duration, $this->dependency);
-            return $this->updateDynamicContent($content, $this->getDynamicPlaceholders());
+            echo $this->updateDynamicContent($content, $this->getDynamicPlaceholders());
         }
-        return '';
     }
 
     /**
@@ -147,7 +145,7 @@ class FragmentCache extends Widget implements DynamicContentAwareInterface
             return $this->_content;
         }
 
-        [$this->_content, $placeholders] = $data;
+        list($this->_content, $placeholders) = $data;
         if (!is_array($placeholders) || count($placeholders) === 0) {
             return $this->_content;
         }

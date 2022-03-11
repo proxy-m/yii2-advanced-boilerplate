@@ -23,6 +23,7 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Powered by {yii}' => 'Powered by {yii}',
     'Yii Framework' => 'Yii Framework',
     '{attribute} must be equal to "{compareValueOrAttribute}".' => '{attribute} täytyy olla yhtä suuri kuin "{compareValueOrAttribute}".',
     '{attribute} must be greater than "{compareValueOrAttribute}".' => '{attribute} täytyy olla suurempi kuin "{compareValueOrAttribute}".',
@@ -112,7 +113,7 @@ return [
     '{nFormatted} B' => '{nFormatted} t',
     '{nFormatted} GB' => '{nFormatted} Gt',
     '{nFormatted} GiB' => '{nFormatted} GiB',
-    '{nFormatted} KB' => '{nFormatted} kt',
+    '{nFormatted} kB' => '{nFormatted} kt',
     '{nFormatted} KiB' => '{nFormatted} KiB',
     '{nFormatted} MB' => '{nFormatted} Mt',
     '{nFormatted} MiB' => '{nFormatted} MiB',

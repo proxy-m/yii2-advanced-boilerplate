@@ -31,7 +31,7 @@ use yii\web\User;
  * {
  *     return [
  *         'access' => [
- *             '__class' => \yii\filters\AccessControl::class,
+ *             'class' => \yii\filters\AccessControl::class,
  *             'only' => ['create', 'update'],
  *             'rules' => [
  *                 // deny all POST requests
@@ -82,7 +82,7 @@ class AccessControl extends ActionFilter
      * @var array the default configuration of access rules. Individual rule configurations
      * specified via [[rules]] will take precedence when the same property of the rule is configured.
      */
-    public $ruleConfig = ['__class' => AccessRule::class];
+    public $ruleConfig = ['class' => 'yii\filters\AccessRule'];
     /**
      * @var array a list of access rule objects or configuration arrays for creating the rule objects.
      * If a rule is specified via a configuration array, it will be merged with [[ruleConfig]] first
@@ -99,7 +99,7 @@ class AccessControl extends ActionFilter
     {
         parent::init();
         if ($this->user !== false) {
-            $this->user = Instance::ensure($this->user, User::class);
+            $this->user = Instance::ensure($this->user, User::className());
         }
         foreach ($this->rules as $i => $rule) {
             if (is_array($rule)) {

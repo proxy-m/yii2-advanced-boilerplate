@@ -21,7 +21,7 @@ use yii\helpers\Json;
  * 'columns' => [
  *     // ...
  *     [
- *         '__class' => \yii\grid\CheckboxColumn::class,
+ *         'class' => 'yii\grid\CheckboxColumn',
  *         // you may configure additional properties here
  *     ],
  * ]

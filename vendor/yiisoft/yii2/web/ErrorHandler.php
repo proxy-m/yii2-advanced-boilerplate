@@ -93,9 +93,9 @@ class ErrorHandler extends \yii\base\ErrorHandler
             // reset parameters of response to avoid interference with partially created response data
             // in case the error occurred while sending the response.
             $response->isSent = false;
-            $response->bodyRange = null;
+            $response->stream = null;
             $response->data = null;
-            $response->setBody(null);
+            $response->content = null;
         } else {
             $response = new Response();
         }
@@ -105,6 +105,7 @@ class ErrorHandler extends \yii\base\ErrorHandler
         $useErrorView = $response->format === Response::FORMAT_HTML && (!YII_DEBUG || $exception instanceof UserException);
 
         if ($useErrorView && $this->errorAction !== null) {
+            Yii::$app->view->clear();
             $result = Yii::$app->runAction($this->errorAction);
             if ($result instanceof Response) {
                 $response = $result;
@@ -179,7 +180,7 @@ class ErrorHandler extends \yii\base\ErrorHandler
      */
     public function htmlEncode($text)
     {
-        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        return htmlspecialchars($text, ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
     }
 
     /**
@@ -263,7 +264,10 @@ class ErrorHandler extends \yii\base\ErrorHandler
             return ob_get_clean();
         }
 
-        return Yii::$app->getView()->renderFile($_file_, $_params_, $this);
+        $view = Yii::$app->getView();
+        $view->clear();
+
+        return $view->renderFile($_file_, $_params_, $this);
     }
 
     /**
@@ -397,7 +401,7 @@ class ErrorHandler extends \yii\base\ErrorHandler
             'http://lighttpd.net/' => ['lighttpd'],
             'http://gwan.com/' => ['g-wan', 'gwan'],
             'http://iis.net/' => ['iis', 'services'],
-            'http://php.net/manual/en/features.commandline.webserver.php' => ['development'],
+            'https://www.php.net/manual/en/features.commandline.webserver.php' => ['development'],
         ];
         if (isset($_SERVER['SERVER_SOFTWARE'])) {
             foreach ($serverUrls as $url => $keywords) {
@@ -479,13 +483,11 @@ class ErrorHandler extends \yii\base\ErrorHandler
     /**
      * Returns human-readable exception name.
      * @param \Exception $exception
-     * @return string human-readable exception name or null if it cannot be determined
+     * @return string|null human-readable exception name or null if it cannot be determined
      */
     public function getExceptionName($exception)
     {
-        if ($exception instanceof \yii\base\Exception || $exception instanceof \yii\base\InvalidCallException ||
-            $exception instanceof \yii\base\InvalidArgumentException ||
-            $exception instanceof \yii\base\UnknownMethodException) {
+        if ($exception instanceof \yii\base\Exception || $exception instanceof \yii\base\InvalidCallException || $exception instanceof \yii\base\InvalidParamException || $exception instanceof \yii\base\UnknownMethodException) {
             return $exception->getName();
         }
 
@@ -498,6 +500,6 @@ class ErrorHandler extends \yii\base\ErrorHandler
      */
     protected function shouldRenderSimpleHtml()
     {
-        return YII_ENV_TEST || Yii::$app->getRequest()->getHeaderLine('x-requested-with') === 'XMLHttpRequest';
+        return YII_ENV_TEST || Yii::$app->request->getIsAjax();
     }
 }

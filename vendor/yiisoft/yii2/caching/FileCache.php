@@ -11,39 +11,29 @@ use Yii;
 use yii\helpers\FileHelper;
 
 /**
- * FileCache implements a cache handler using files.
+ * FileCache implements a cache component using files.
  *
  * For each data value being cached, FileCache will store it in a separate file.
  * The cache files are placed under [[cachePath]]. FileCache will perform garbage collection
  * automatically to remove expired cache files.
  *
- * Application configuration example:
- *
- * ```php
- * return [
- *     'components' => [
- *         'cache' => [
- *             '__class' => yii\caching\Cache::class,
- *             'handler' => [
- *                 '__class' => yii\caching\FileCache::class,
- *                 // 'cachePath' => '@runtime/cache',
- *             ],
- *         ],
- *         // ...
- *     ],
- *     // ...
- * ];
- * ```
- *
- * Please refer to [[\Psr\SimpleCache\CacheInterface]] for common cache operations that are supported by FileCache.
+ * Please refer to [[Cache]] for common cache operations that are supported by FileCache.
  *
  * For more details and usage information on Cache, see the [guide article on caching](guide:caching-overview).
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
-class FileCache extends SimpleCache
+class FileCache extends Cache
 {
+    /**
+     * @var string a string prefixed to every cache key. This is needed when you store
+     * cache data under the same [[cachePath]] for different applications to avoid
+     * conflict.
+     *
+     * To ensure interoperability, only alphanumeric characters should be used.
+     */
+    public $keyPrefix = '';
     /**
      * @var string the directory to store cache files. You may use [path alias](guide:concept-aliases) here.
      * If not set, it will use the "cache" subdirectory under the application runtime path.
@@ -94,17 +84,27 @@ class FileCache extends SimpleCache
     }
 
     /**
-     * {@inheritdoc}
+     * Checks whether a specified key exists in the cache.
+     * This can be faster than getting the value from the cache if the data is big.
+     * Note that this method does not check whether the dependency associated
+     * with the cached data, if there is any, has changed. So a call to [[get]]
+     * may return false while exists returns true.
+     * @param mixed $key a key identifying the cached value. This can be a simple string or
+     * a complex data structure consisting of factors representing the key.
+     * @return bool true if a value exists in cache, false if the value is not in the cache or expired.
      */
-    public function has($key)
+    public function exists($key)
     {
-        $cacheFile = $this->getCacheFile($this->normalizeKey($key));
+        $cacheFile = $this->getCacheFile($this->buildKey($key));
 
         return @filemtime($cacheFile) > time();
     }
 
     /**
-     * {@inheritdoc}
+     * Retrieves a value from cache with a specified key.
+     * This is the implementation of the method declared in the parent class.
+     * @param string $key a unique key identifying the cached value
+     * @return string|false the value stored in cache, false if the value is not in the cache or expired.
      */
     protected function getValue($key)
     {
@@ -125,9 +125,16 @@ class FileCache extends SimpleCache
     }
 
     /**
-     * {@inheritdoc}
+     * Stores a value identified by a key in cache.
+     * This is the implementation of the method declared in the parent class.
+     *
+     * @param string $key the key identifying the value to be cached
+     * @param string $value the value to be cached. Other types (If you have disabled [[serializer]]) unable to get is
+     * correct in [[getValue()]].
+     * @param int $duration the number of seconds in which the cached value will expire. 0 means never expire.
+     * @return bool true if the value is successfully stored into cache, false otherwise
      */
-    protected function setValue($key, $value, $ttl)
+    protected function setValue($key, $value, $duration)
     {
         $this->gc();
         $cacheFile = $this->getCacheFile($key);
@@ -144,11 +151,11 @@ class FileCache extends SimpleCache
             if ($this->fileMode !== null) {
                 @chmod($cacheFile, $this->fileMode);
             }
-            if ($ttl <= 0) {
-                $ttl = 31536000; // 1 year
+            if ($duration <= 0) {
+                $duration = 31536000; // 1 year
             }
 
-            return @touch($cacheFile, $ttl + time());
+            return @touch($cacheFile, $duration + time());
         }
 
         $error = error_get_last();
@@ -157,41 +164,75 @@ class FileCache extends SimpleCache
     }
 
     /**
-     * {@inheritdoc}
+     * Stores a value identified by a key into cache if the cache does not contain this key.
+     * This is the implementation of the method declared in the parent class.
+     *
+     * @param string $key the key identifying the value to be cached
+     * @param string $value the value to be cached. Other types (if you have disabled [[serializer]]) unable to get is
+     * correct in [[getValue()]].
+     * @param int $duration the number of seconds in which the cached value will expire. 0 means never expire.
+     * @return bool true if the value is successfully stored into cache, false otherwise
+     */
+    protected function addValue($key, $value, $duration)
+    {
+        $cacheFile = $this->getCacheFile($key);
+        if (@filemtime($cacheFile) > time()) {
+            return false;
+        }
+
+        return $this->setValue($key, $value, $duration);
+    }
+
+    /**
+     * Deletes a value with the specified key from cache
+     * This is the implementation of the method declared in the parent class.
+     * @param string $key the key of the value to be deleted
+     * @return bool if no error happens during deletion
      */
     protected function deleteValue($key)
     {
         $cacheFile = $this->getCacheFile($key);
+
         return @unlink($cacheFile);
     }
 
     /**
-     * Returns the cache file path given the cache key.
-     * @param string $key cache key
+     * Returns the cache file path given the normalized cache key.
+     * @param string $normalizedKey normalized cache key by [[buildKey]] method
      * @return string the cache file path
      */
-    protected function getCacheFile($key)
+    protected function getCacheFile($normalizedKey)
     {
-        if ($this->directoryLevel > 0) {
-            $base = $this->cachePath;
-            for ($i = 0; $i < $this->directoryLevel; ++$i) {
-                if (($prefix = substr($key, $i + $i, 2)) !== false) {
-                    $base .= DIRECTORY_SEPARATOR . $prefix;
-                }
-            }
+        $cacheKey = $normalizedKey;
 
-            return $base . DIRECTORY_SEPARATOR . $key . $this->cacheFileSuffix;
+        if ($this->keyPrefix !== '') {
+            // Remove key prefix to avoid generating constant directory levels
+            $lenKeyPrefix = strlen($this->keyPrefix);
+            $cacheKey = substr_replace($normalizedKey, '', 0, $lenKeyPrefix);
         }
 
-        return $this->cachePath . DIRECTORY_SEPARATOR . $key . $this->cacheFileSuffix;
+        $cachePath = $this->cachePath;
+
+        if ($this->directoryLevel > 0) {
+            for ($i = 0; $i < $this->directoryLevel; ++$i) {
+                if (($subDirectory = substr($cacheKey, $i + $i, 2)) !== false) {
+                    $cachePath .= DIRECTORY_SEPARATOR . $subDirectory;
+                }
+            }
+        }
+
+        return $cachePath . DIRECTORY_SEPARATOR . $normalizedKey . $this->cacheFileSuffix;
     }
 
     /**
-     * {@inheritdoc}
+     * Deletes all values from cache.
+     * This is the implementation of the method declared in the parent class.
+     * @return bool whether the flush operation was successful.
      */
-    public function clear()
+    protected function flushValues()
     {
         $this->gc(true, false);
+
         return true;
     }
 
@@ -204,7 +245,7 @@ class FileCache extends SimpleCache
      */
     public function gc($force = false, $expiredOnly = true)
     {
-        if ($force || mt_rand(0, 1000000) < $this->gcProbability) {
+        if ($force || random_int(0, 1000000) < $this->gcProbability) {
             $this->gcRecursive($this->cachePath, $expiredOnly);
         }
     }
@@ -220,7 +261,7 @@ class FileCache extends SimpleCache
     {
         if (($handle = opendir($path)) !== false) {
             while (($file = readdir($handle)) !== false) {
-                if ($file[0] === '.') {
+                if (strncmp($file, '.', 1) === 0) {
                     continue;
                 }
                 $fullPath = $path . DIRECTORY_SEPARATOR . $file;

@@ -7,36 +7,35 @@
 
 namespace yii\console\controllers;
 
-use Psr\SimpleCache\CacheInterface;
 use Yii;
 use yii\caching\ApcCache;
-use yii\caching\Cache;
+use yii\caching\CacheInterface;
 use yii\console\Controller;
 use yii\console\Exception;
 use yii\console\ExitCode;
 use yii\helpers\Console;
 
 /**
- * Allows you to clear cache.
+ * Allows you to flush cache.
  *
- * see list of available components to clear:
+ * see list of available components to flush:
  *
  *     yii cache
  *
- * clear particular components specified by their names:
+ * flush particular components specified by their names:
  *
- *     yii cache/clear first second third
+ *     yii cache/flush first second third
  *
- * clear all cache components that can be found in the system
+ * flush all cache components that can be found in the system
  *
- *     yii cache/clear-all
+ *     yii cache/flush-all
  *
  * Note that the command uses cache components defined in your console application configuration file. If components
  * configured are different from web application, web application cache won't be cleared. In order to fix it please
  * duplicate web application cache components in console config. You can use any component names.
  *
- * APC is not shared between PHP processes so clearing cache from command line has no effect on web.
- * Clearing web cache could be either done by:
+ * APC is not shared between PHP processes so flushing cache from command line has no effect on web.
+ * Flushing web cache could be either done by:
  *
  * - Putting a php file under web root and calling it via HTTP
  * - Using [Cachetool](http://gordalina.github.io/cachetool/)
@@ -48,29 +47,30 @@ use yii\helpers\Console;
 class CacheController extends Controller
 {
     /**
-     * Lists the caches that can be cleared.
+     * Lists the caches that can be flushed.
      */
     public function actionIndex()
     {
         $caches = $this->findCaches();
 
         if (!empty($caches)) {
-            $this->notifyCachesCanBeCleared($caches);
+            $this->notifyCachesCanBeFlushed($caches);
         } else {
             $this->notifyNoCachesFound();
         }
     }
 
     /**
-     * Clears given cache components.
+     * Flushes given cache components.
+     *
      * For example,
      *
      * ```
-     * # clears caches specified by their id: "first", "second", "third"
-     * yii cache/clear first second third
+     * # flushes caches specified by their id: "first", "second", "third"
+     * yii cache/flush first second third
      * ```
      */
-    public function actionClear()
+    public function actionFlush()
     {
         $cachesInput = func_get_args();
 
@@ -84,16 +84,16 @@ class CacheController extends Controller
         $foundCaches = array_keys($caches);
         $notFoundCaches = array_diff($cachesInput, array_keys($caches));
 
-        if ($notFoundCaches) {
+        if ($notFoundCaches !== []) {
             $this->notifyNotFoundCaches($notFoundCaches);
         }
 
-        if (!$foundCaches) {
+        if ($foundCaches === []) {
             $this->notifyNoCachesFound();
             return ExitCode::OK;
         }
 
-        if (!$this->confirmClear($foundCaches)) {
+        if (!$this->confirmFlush($foundCaches)) {
             return ExitCode::OK;
         }
 
@@ -101,17 +101,17 @@ class CacheController extends Controller
             $cachesInfo[] = [
                 'name' => $name,
                 'class' => $class,
-                'is_flushed' => $this->canBeCleared($class) ? Yii::$app->get($name)->clear() : false,
+                'is_flushed' => $this->canBeFlushed($class) ? Yii::$app->get($name)->flush() : false,
             ];
         }
 
-        $this->notifyCleared($cachesInfo);
+        $this->notifyFlushed($cachesInfo);
     }
 
     /**
      * Flushes all caches registered in the system.
      */
-    public function actionClearAll()
+    public function actionFlushAll()
     {
         $caches = $this->findCaches();
         $cachesInfo = [];
@@ -125,11 +125,11 @@ class CacheController extends Controller
             $cachesInfo[] = [
                 'name' => $name,
                 'class' => $class,
-                'is_flushed' => $this->canBeCleared($class) ? Yii::$app->get($name)->clear() : false,
+                'is_flushed' => $this->canBeFlushed($class) ? Yii::$app->get($name)->flush() : false,
             ];
         }
 
-        $this->notifyCleared($cachesInfo);
+        $this->notifyFlushed($cachesInfo);
     }
 
     /**
@@ -137,7 +137,7 @@ class CacheController extends Controller
      *
      * ```
      * # clears cache schema specified by component id: "db"
-     * yii cache/clear-schema db
+     * yii cache/flush-schema db
      * ```
      *
      * @param string $db id connection component
@@ -147,7 +147,7 @@ class CacheController extends Controller
      *
      * @since 2.0.1
      */
-    public function actionClearSchema($db = 'db')
+    public function actionFlushSchema($db = 'db')
     {
         $connection = Yii::$app->get($db, false);
         if ($connection === null) {
@@ -175,12 +175,12 @@ class CacheController extends Controller
      * Notifies user that given caches are found and can be flushed.
      * @param array $caches array of cache component classes
      */
-    private function notifyCachesCanBeCleared($caches)
+    private function notifyCachesCanBeFlushed($caches)
     {
         $this->stdout("The following caches were found in the system:\n\n", Console::FG_YELLOW);
 
         foreach ($caches as $name => $class) {
-            if ($this->canBeCleared($class)) {
+            if ($this->canBeFlushed($class)) {
                 $this->stdout("\t* $name ($class)\n", Console::FG_GREEN);
             } else {
                 $this->stdout("\t* $name ($class) - can not be flushed via console\n", Console::FG_YELLOW);
@@ -216,7 +216,7 @@ class CacheController extends Controller
     /**
      * @param array $caches
      */
-    private function notifyCleared($caches)
+    private function notifyFlushed($caches)
     {
         $this->stdout("The following cache components were processed:\n\n", Console::FG_YELLOW);
 
@@ -234,11 +234,11 @@ class CacheController extends Controller
     }
 
     /**
-     * Prompts user with confirmation if caches should be cleared.
+     * Prompts user with confirmation if caches should be flushed.
      * @param array $cachesNames
      * @return bool
      */
-    private function confirmClear($cachesNames)
+    private function confirmFlush($cachesNames)
     {
         $this->stdout("The following cache components will be flushed:\n\n", Console::FG_YELLOW);
 
@@ -267,8 +267,8 @@ class CacheController extends Controller
 
             if ($component instanceof CacheInterface) {
                 $caches[$name] = get_class($component);
-            } elseif (is_array($component) && isset($component['__class']) && $this->isCacheClass($component['__class'])) {
-                $caches[$name] = $component['__class'];
+            } elseif (is_array($component) && isset($component['class']) && $this->isCacheClass($component['class'])) {
+                $caches[$name] = $component['class'];
             } elseif (is_string($component) && $this->isCacheClass($component)) {
                 $caches[$name] = $component;
             } elseif ($component instanceof \Closure) {
@@ -290,16 +290,16 @@ class CacheController extends Controller
      */
     private function isCacheClass($className)
     {
-        return is_subclass_of($className, CacheInterface::class);
+        return is_subclass_of($className, 'yii\caching\CacheInterface') || $className === 'yii\caching\CacheInterface';
     }
 
     /**
-     * Checks if cache of a certain class can be cleared.
+     * Checks if cache of a certain class can be flushed.
      * @param string $className class name.
      * @return bool
      */
-    private function canBeCleared($className)
+    private function canBeFlushed($className)
     {
-        return !is_a($className, ApcCache::class, true) || PHP_SAPI !== 'cli';
+        return !is_a($className, ApcCache::className(), true) || PHP_SAPI !== 'cli';
     }
 }

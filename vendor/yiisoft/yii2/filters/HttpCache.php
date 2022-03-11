@@ -25,7 +25,7 @@ use yii\base\ActionFilter;
  * {
  *     return [
  *         [
- *             '__class' => \yii\filters\HttpCache::class,
+ *             'class' => 'yii\filters\HttpCache',
  *             'only' => ['index'],
  *             'lastModified' => function ($action, $params) {
  *                 $q = new \yii\db\Query();
@@ -91,10 +91,10 @@ class HttpCache extends ActionFilter
      */
     public $cacheControlHeader = 'public, max-age=3600';
     /**
-     * @var string the name of the cache limiter to be set when [session_cache_limiter()](http://www.php.net/manual/en/function.session-cache-limiter.php)
+     * @var string the name of the cache limiter to be set when [session_cache_limiter()](https://www.php.net/manual/en/function.session-cache-limiter.php)
      * is called. The default value is an empty string, meaning turning off automatic sending of cache headers entirely.
      * You may set this property to be `public`, `private`, `private_no_expire`, and `nocache`.
-     * Please refer to [session_cache_limiter()](http://www.php.net/manual/en/function.session-cache-limiter.php)
+     * Please refer to [session_cache_limiter()](https://www.php.net/manual/en/function.session-cache-limiter.php)
      * for detailed explanation of these values.
      *
      * If this property is `null`, then `session_cache_limiter()` will not be called. As a result,
@@ -139,13 +139,13 @@ class HttpCache extends ActionFilter
 
         $response = Yii::$app->getResponse();
         if ($etag !== null) {
-            $response->setHeader('Etag', $etag);
+            $response->getHeaders()->set('Etag', $etag);
         }
 
         $cacheValid = $this->validateCache($lastModified, $etag);
         // https://tools.ietf.org/html/rfc7232#section-4.1
         if ($lastModified !== null && (!$cacheValid || ($cacheValid && $etag === null))) {
-            $response->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
+            $response->getHeaders()->set('Last-Modified', gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
         }
         if ($cacheValid) {
             $response->setStatusCode(304);
@@ -165,13 +165,12 @@ class HttpCache extends ActionFilter
      */
     protected function validateCache($lastModified, $etag)
     {
-        $request = Yii::$app->getRequest();
-        if ($request->hasHeader('if-none-match')) {
-            // 'if-none-match' takes precedence over 'if-modified-since'
+        if (Yii::$app->request->headers->has('If-None-Match')) {
+            // HTTP_IF_NONE_MATCH takes precedence over HTTP_IF_MODIFIED_SINCE
             // http://tools.ietf.org/html/rfc7232#section-3.3
             return $etag !== null && in_array($etag, Yii::$app->request->getETags(), true);
-        } elseif ($request->hasHeader('if-modified-since')) {
-            return $lastModified !== null && @strtotime($request->getHeaderLine('if-modified-since')) >= $lastModified;
+        } elseif (Yii::$app->request->headers->has('If-Modified-Since')) {
+            return $lastModified !== null && @strtotime(Yii::$app->request->headers->get('If-Modified-Since')) >= $lastModified;
         }
 
         return false;
@@ -194,8 +193,10 @@ class HttpCache extends ActionFilter
             Yii::$app->getSession()->setCacheLimiter($this->sessionCacheLimiter);
         }
 
+        $headers = Yii::$app->getResponse()->getHeaders();
+
         if ($this->cacheControlHeader !== null) {
-            Yii::$app->getResponse()->setHeader('Cache-Control', $this->cacheControlHeader);
+            $headers->set('Cache-Control', $this->cacheControlHeader);
         }
     }
 

@@ -11,7 +11,7 @@ use Yii;
 use yii\base\InvalidRouteException;
 
 // define STDIN, STDOUT and STDERR if the PHP SAPI did not define them (e.g. creating console application in web env)
-// http://php.net/manual/en/features.commandline.io-streams.php
+// https://www.php.net/manual/en/features.commandline.io-streams.php
 defined('STDIN') or define('STDIN', fopen('php://stdin', 'r'));
 defined('STDOUT') or define('STDOUT', fopen('php://stdout', 'w'));
 defined('STDERR') or define('STDERR', fopen('php://stderr', 'w'));
@@ -50,9 +50,9 @@ defined('STDERR') or define('STDERR', fopen('php://stderr', 'w'));
  * yii help
  * ```
  *
- * @property ErrorHandler $errorHandler The error handler application component. This property is read-only.
- * @property Request $request The request component. This property is read-only.
- * @property Response $response The response component. This property is read-only.
+ * @property-read ErrorHandler $errorHandler The error handler application component.
+ * @property-read Request $request The request component.
+ * @property-read Response $response The response component.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -131,7 +131,7 @@ class Application extends \yii\base\Application
         }
         // ensure we have the 'help' command so that we can list the available commands
         if (!isset($this->controllerMap['help'])) {
-            $this->controllerMap['help'] = controllers\HelpController::class;
+            $this->controllerMap['help'] = 'yii\console\controllers\HelpController';
         }
     }
 
@@ -142,7 +142,7 @@ class Application extends \yii\base\Application
      */
     public function handleRequest($request)
     {
-        [$route, $params] = $request->resolve();
+        list($route, $params) = $request->resolve();
         $this->requestedRoute = $route;
         $result = $this->runAction($route, $params);
         if ($result instanceof Response) {
@@ -171,7 +171,7 @@ class Application extends \yii\base\Application
      * @param string $route the route that specifies the action.
      * @param array $params the parameters to be passed to the action
      * @return int|Response the result of the action. This can be either an exit code or Response object.
-     * Exit code 0 means normal, and other values mean abnormal. Exit code of `null` is treaded as `0` as well.
+     * Exit code 0 means normal, and other values mean abnormal. Exit code of `null` is treated as `0` as well.
      * @throws Exception if the route is invalid
      */
     public function runAction($route, $params = [])
@@ -191,13 +191,13 @@ class Application extends \yii\base\Application
     public function coreCommands()
     {
         return [
-            'asset' => controllers\AssetController::class,
-            'cache' => controllers\CacheController::class,
-            'fixture' => controllers\FixtureController::class,
-            'help' => controllers\HelpController::class,
-            'message' => controllers\MessageController::class,
-            'migrate' => controllers\MigrateController::class,
-            'serve' => controllers\ServeController::class,
+            'asset' => 'yii\console\controllers\AssetController',
+            'cache' => 'yii\console\controllers\CacheController',
+            'fixture' => 'yii\console\controllers\FixtureController',
+            'help' => 'yii\console\controllers\HelpController',
+            'message' => 'yii\console\controllers\MessageController',
+            'migrate' => 'yii\console\controllers\MigrateController',
+            'serve' => 'yii\console\controllers\ServeController',
         ];
     }
 
@@ -234,9 +234,9 @@ class Application extends \yii\base\Application
     public function coreComponents()
     {
         return array_merge(parent::coreComponents(), [
-            'request' => ['__class' => Request::class],
-            'response' => ['__class' => Response::class],
-            'errorHandler' => ['__class' => ErrorHandler::class],
+            'request' => ['class' => 'yii\console\Request'],
+            'response' => ['class' => 'yii\console\Response'],
+            'errorHandler' => ['class' => 'yii\console\ErrorHandler'],
         ]);
     }
 }

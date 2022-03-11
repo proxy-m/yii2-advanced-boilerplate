@@ -16,7 +16,7 @@ use yii\base\InvalidArgumentException;
  *
  * For more details and usage information on BaseDataProvider, see the [guide article on data providers](guide:output-data-providers).
  *
- * @property int $count The number of data models in the current page. This property is read-only.
+ * @property-read int $count The number of data models in the current page.
  * @property array $keys The list of key values corresponding to [[models]]. Each data model in [[models]] is
  * uniquely identified by the corresponding key value in this array.
  * @property array $models The list of data models in the current page.
@@ -201,8 +201,8 @@ abstract class BaseDataProvider extends Component implements DataProviderInterfa
      * @param array|Pagination|bool $value the pagination to be used by this data provider.
      * This can be one of the following:
      *
-     * - a configuration array for creating the pagination object. The
-     *   "class" element defaults to `yii\data\Pagination`
+     * - a configuration array for creating the pagination object. The "class" element defaults
+     *   to 'yii\data\Pagination'
      * - an instance of [[Pagination]] or its subclass
      * - false, if pagination needs to be disabled.
      *
@@ -211,7 +211,7 @@ abstract class BaseDataProvider extends Component implements DataProviderInterfa
     public function setPagination($value)
     {
         if (is_array($value)) {
-            $config = ['__class' => Pagination::class];
+            $config = ['class' => Pagination::className()];
             if ($this->id !== null) {
                 $config['pageParam'] = $this->id . '-page';
                 $config['pageSizeParam'] = $this->id . '-per-page';
@@ -242,8 +242,8 @@ abstract class BaseDataProvider extends Component implements DataProviderInterfa
      * @param array|Sort|bool $value the sort definition to be used by this data provider.
      * This can be one of the following:
      *
-     * - a configuration array for creating the sort definition object. The
-     *   "class" element defaults to `yii\data\Sort`
+     * - a configuration array for creating the sort definition object. The "class" element defaults
+     *   to 'yii\data\Sort'
      * - an instance of [[Sort]] or its subclass
      * - false, if sorting needs to be disabled.
      *
@@ -252,7 +252,7 @@ abstract class BaseDataProvider extends Component implements DataProviderInterfa
     public function setSort($value)
     {
         if (is_array($value)) {
-            $config = ['__class' => Sort::class];
+            $config = ['class' => Sort::className()];
             if ($this->id !== null) {
                 $config['sortParam'] = $this->id . '-sort';
             }

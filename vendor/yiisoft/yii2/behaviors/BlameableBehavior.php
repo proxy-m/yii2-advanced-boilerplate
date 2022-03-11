@@ -41,7 +41,7 @@ use yii\db\BaseActiveRecord;
  * {
  *     return [
  *         [
- *             '__class' => BlameableBehavior::class,
+ *             'class' => BlameableBehavior::class,
  *             'createdByAttribute' => 'author_id',
  *             'updatedByAttribute' => 'updater_id',
  *         ],
@@ -108,6 +108,8 @@ class BlameableBehavior extends AttributeBehavior
             }
 
             return $userId;
+        } elseif ($this->value === null) {
+            return $this->getDefaultValue($event);
         }
 
         return parent::getValue($event);

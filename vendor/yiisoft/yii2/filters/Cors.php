@@ -9,6 +9,7 @@ namespace yii\filters;
 
 use Yii;
 use yii\base\ActionFilter;
+use yii\base\InvalidConfigException;
 use yii\web\Request;
 use yii\web\Response;
 
@@ -25,7 +26,7 @@ use yii\web\Response;
  * {
  *     return [
  *         'corsFilter' => [
- *             '__class' => \yii\filters\Cors::class,
+ *             'class' => \yii\filters\Cors::class,
  *         ],
  *     ];
  * }
@@ -39,14 +40,15 @@ use yii\web\Response;
  * {
  *     return [
  *         'corsFilter' => [
- *             '__class' => \yii\filters\Cors::class,
+ *             'class' => \yii\filters\Cors::class,
  *             'cors' => [
  *                 // restrict access to
  *                 'Origin' => ['http://www.myserver.com', 'https://www.myserver.com'],
- *                 'Access-Control-Request-Method' => ['POST', 'PUT'],
  *                 // Allow only POST and PUT methods
- *                 'Access-Control-Request-Headers' => ['X-Wsse'],
+ *                 'Access-Control-Request-Method' => ['POST', 'PUT'],
  *                 // Allow only headers 'X-Wsse'
+ *                 'Access-Control-Request-Headers' => ['X-Wsse'],
+ *                 // Allow credentials (cookies, authorization headers, etc.) to be exposed to the browser
  *                 'Access-Control-Allow-Credentials' => true,
  *                 // Allow OPTIONS caching
  *                 'Access-Control-Max-Age' => 3600,
@@ -106,7 +108,7 @@ class Cors extends ActionFilter
         $responseCorsHeaders = $this->prepareHeaders($requestCorsHeaders);
         $this->addCorsHeaders($this->response, $responseCorsHeaders);
 
-        if ($this->request->isOptions && $this->request->hasHeader('Access-Control-Request-Method')) {
+        if ($this->request->isOptions && $this->request->headers->has('Access-Control-Request-Method')) {
             // it is CORS preflight request, respond with 200 OK without further processing
             $this->response->setStatusCode(200);
             return false;
@@ -116,7 +118,7 @@ class Cors extends ActionFilter
     }
 
     /**
-     * Override settings for specific action
+     * Override settings for specific action.
      * @param \yii\base\Action $action the action settings to override
      */
     public function overrideDefaultSettings($action)
@@ -140,7 +142,8 @@ class Cors extends ActionFilter
     {
         $headers = [];
         foreach (array_keys($this->cors) as $headerField) {
-            $headerData = $this->request->getHeaderLine($headerField);
+            $serverField = $this->headerizeToPhp($headerField);
+            $headerData = isset($_SERVER[$serverField]) ? $_SERVER[$serverField] : null;
             if ($headerData !== null) {
                 $headers[$headerField] = $headerData;
             }
@@ -167,7 +170,7 @@ class Cors extends ActionFilter
                 // Per CORS standard (https://fetch.spec.whatwg.org), wildcard origins shouldn't be used together with credentials
                 if (isset($this->cors['Access-Control-Allow-Credentials']) && $this->cors['Access-Control-Allow-Credentials']) {
                     if (YII_DEBUG) {
-                        throw new Exception("Allowing credentials for wildcard origins is insecure. Please specify more restrictive origins or set 'credentials' to false in your CORS configuration.");
+                        throw new InvalidConfigException("Allowing credentials for wildcard origins is insecure. Please specify more restrictive origins or set 'credentials' to false in your CORS configuration.");
                     } else {
                         Yii::error("Allowing credentials for wildcard origins is insecure. Please specify more restrictive origins or set 'credentials' to false in your CORS configuration.", __METHOD__);
                     }
@@ -193,6 +196,10 @@ class Cors extends ActionFilter
 
         if (isset($this->cors['Access-Control-Expose-Headers'])) {
             $responseHeaders['Access-Control-Expose-Headers'] = implode(', ', $this->cors['Access-Control-Expose-Headers']);
+        }
+
+        if (isset($this->cors['Access-Control-Allow-Headers'])) {
+            $responseHeaders['Access-Control-Allow-Headers'] = implode(', ', $this->cors['Access-Control-Allow-Headers']);
         }
 
         return $responseHeaders;
@@ -230,8 +237,9 @@ class Cors extends ActionFilter
     public function addCorsHeaders($response, $headers)
     {
         if (empty($headers) === false) {
+            $responseHeaders = $response->getHeaders();
             foreach ($headers as $field => $value) {
-                $response->setHeader($field, $value);
+                $responseHeaders->set($field, $value);
             }
         }
     }
@@ -252,5 +260,19 @@ class Cors extends ActionFilter
             return str_replace(' ', '-', ucwords(strtolower(str_replace(['_', '-'], [' ', ' '], $element))));
         }, $headers);
         return implode(', ', $headers);
+    }
+
+    /**
+     * Convert any string (including php headers with HTTP prefix) to header format.
+     *
+     * Example:
+     *  - X-Pingother -> HTTP_X_PINGOTHER
+     *  - X PINGOTHER -> HTTP_X_PINGOTHER
+     * @param string $string string to convert
+     * @return string the result in "php $_SERVER header" format
+     */
+    protected function headerizeToPhp($string)
+    {
+        return 'HTTP_' . strtoupper(str_replace([' ', '-'], ['_', '_'], $string));
     }
 }

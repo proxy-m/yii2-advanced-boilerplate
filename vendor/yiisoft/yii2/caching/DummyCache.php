@@ -7,27 +7,8 @@
 
 namespace yii\caching;
 
-use yii\base\Component;
-
 /**
  * DummyCache is a placeholder cache component.
- *
- * Application configuration example:
- *
- * ```php
- * return [
- *     'components' => [
- *         'cache' => [
- *             '__class' => yii\caching\Cache::class,
- *             'handler' => [
- *                 '__class' => yii\caching\DummyCache::class,
- *             ],
- *         ],
- *         // ...
- *     ],
- *     // ...
- * ];
- * ```
  *
  * DummyCache does not cache anything. It is provided so that one can always configure
  * a 'cache' application component and save the check of existence of `\Yii::$app->cache`.
@@ -39,68 +20,63 @@ use yii\base\Component;
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
-class DummyCache extends Component implements \Psr\SimpleCache\CacheInterface
+class DummyCache extends Cache
 {
     /**
-     * {@inheritdoc}
+     * Retrieves a value from cache with a specified key.
+     * This is the implementation of the method declared in the parent class.
+     * @param string $key a unique key identifying the cached value
+     * @return mixed|false the value stored in cache, false if the value is not in the cache or expired.
      */
-    public function has($key)
+    protected function getValue($key)
     {
         return false;
     }
 
     /**
-     * {@inheritdoc}
+     * Stores a value identified by a key in cache.
+     * This is the implementation of the method declared in the parent class.
+     *
+     * @param string $key the key identifying the value to be cached
+     * @param mixed $value the value to be cached
+     * @param int $duration the number of seconds in which the cached value will expire. 0 means never expire.
+     * @return bool true if the value is successfully stored into cache, false otherwise
      */
-    public function get($key, $default = null)
-    {
-        return $default;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function set($key, $value, $ttl = null)
+    protected function setValue($key, $value, $duration)
     {
         return true;
     }
 
     /**
-     * {@inheritdoc}
+     * Stores a value identified by a key into cache if the cache does not contain this key.
+     * This is the implementation of the method declared in the parent class.
+     * @param string $key the key identifying the value to be cached
+     * @param mixed $value the value to be cached
+     * @param int $duration the number of seconds in which the cached value will expire. 0 means never expire.
+     * @return bool true if the value is successfully stored into cache, false otherwise
      */
-    public function delete($key)
+    protected function addValue($key, $value, $duration)
     {
         return true;
     }
 
     /**
-     * {@inheritdoc}
+     * Deletes a value with the specified key from cache
+     * This is the implementation of the method declared in the parent class.
+     * @param string $key the key of the value to be deleted
+     * @return bool if no error happens during deletion
      */
-    public function clear()
+    protected function deleteValue($key)
     {
         return true;
     }
 
     /**
-     * {@inheritdoc}
+     * Deletes all values from cache.
+     * This is the implementation of the method declared in the parent class.
+     * @return bool whether the flush operation was successful.
      */
-    public function getMultiple($keys, $default = null)
-    {
-        return array_fill_keys($keys, $default);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setMultiple($values, $ttl = null)
-    {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function deleteMultiple($keys)
+    protected function flushValues()
     {
         return true;
     }

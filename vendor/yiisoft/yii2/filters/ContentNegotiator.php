@@ -39,7 +39,7 @@ use yii\web\Response;
  * return [
  *     'bootstrap' => [
  *         [
- *             '__class' => \yii\filters\ContentNegotiator::class,
+ *             'class' => 'yii\filters\ContentNegotiator',
  *             'formats' => [
  *                 'application/json' => Response::FORMAT_JSON,
  *                 'application/xml' => Response::FORMAT_XML,
@@ -64,7 +64,7 @@ use yii\web\Response;
  * {
  *     return [
  *         [
- *             '__class' => \yii\filters\ContentNegotiator::class,
+ *             'class' => 'yii\filters\ContentNegotiator',
  *             'only' => ['view', 'index'],  // in a controller
  *             // if in a module, use the following IDs for user actions
  *             // 'only' => ['user/view', 'user/index']
@@ -94,7 +94,7 @@ class ContentNegotiator extends ActionFilter implements BootstrapInterface
      */
     public $formatParam = '_format';
     /**
-     * @var string the name of the GET parameter that specifies the [[\yii\base\Application::language|application language]].
+     * @var string the name of the GET parameter that specifies the [[\yii\base\Application::$language|application language]].
      * Note that if the specified language does not match any of [[languages]], the first language in [[languages]]
      * will be used. If the parameter value is empty or if this property is null,
      * the application language will be determined based on the `Accept-Language` HTTP header only.
@@ -154,9 +154,15 @@ class ContentNegotiator extends ActionFilter implements BootstrapInterface
         $request = $this->request ?: Yii::$app->getRequest();
         $response = $this->response ?: Yii::$app->getResponse();
         if (!empty($this->formats)) {
+            if (\count($this->formats) > 1) {
+                $response->getHeaders()->add('Vary', 'Accept');
+            }
             $this->negotiateContentType($request, $response);
         }
         if (!empty($this->languages)) {
+            if (\count($this->languages) > 1) {
+                $response->getHeaders()->add('Vary', 'Accept-Language');
+            }
             Yii::$app->language = $this->negotiateLanguage($request);
         }
     }
@@ -210,7 +216,7 @@ class ContentNegotiator extends ActionFilter implements BootstrapInterface
             return;
         }
 
-        throw new NotAcceptableHttpException('None of your requested media types is supported.');
+        throw new NotAcceptableHttpException('None of your requested content types is supported.');
     }
 
     /**

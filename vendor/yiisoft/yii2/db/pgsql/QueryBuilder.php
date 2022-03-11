@@ -84,10 +84,10 @@ class QueryBuilder extends \yii\db\QueryBuilder
     protected function defaultConditionClasses()
     {
         return array_merge(parent::defaultConditionClasses(), [
-            'ILIKE' => \yii\db\conditions\LikeCondition::class,
-            'NOT ILIKE' => \yii\db\conditions\LikeCondition::class,
-            'OR ILIKE' => \yii\db\conditions\LikeCondition::class,
-            'OR NOT ILIKE' => \yii\db\conditions\LikeCondition::class,
+            'ILIKE' => 'yii\db\conditions\LikeCondition',
+            'NOT ILIKE' => 'yii\db\conditions\LikeCondition',
+            'OR ILIKE' => 'yii\db\conditions\LikeCondition',
+            'OR NOT ILIKE' => 'yii\db\conditions\LikeCondition',
         ]);
     }
 
@@ -97,8 +97,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
     protected function defaultExpressionBuilders()
     {
         return array_merge(parent::defaultExpressionBuilders(), [
-            \yii\db\ArrayExpression::class => ArrayExpressionBuilder::class,
-            \yii\db\JsonExpression::class => JsonExpressionBuilder::class,
+            'yii\db\ArrayExpression' => 'yii\db\pgsql\ArrayExpressionBuilder',
+            'yii\db\JsonExpression' => 'yii\db\pgsql\JsonExpressionBuilder',
         ]);
     }
 
@@ -140,6 +140,19 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function dropIndex($name, $table)
     {
+        if (strpos($table, '.') !== false && strpos($name, '.') === false) {
+            if (strpos($table, '{{') !== false) {
+                $table = preg_replace('/\\{\\{(.*?)\\}\\}/', '\1', $table);
+                list($schema, $table) = explode('.', $table);
+                if (strpos($schema, '%') === false)
+                    $name = $schema.'.'.$name;
+                else
+                    $name = '{{'.$schema.'.'.$name.'}}';
+            } else {
+                list($schema) = explode('.', $table);
+                $name = $schema.'.'.$name;
+            }
+        }
         return 'DROP INDEX ' . $this->db->quoteTableName($name);
     }
 
@@ -236,14 +249,52 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public function alterColumn($table, $column, $type)
     {
+        $columnName = $this->db->quoteColumnName($column);
+        $tableName = $this->db->quoteTableName($table);
+
         // https://github.com/yiisoft/yii2/issues/4492
         // http://www.postgresql.org/docs/9.1/static/sql-altertable.html
-        if (!preg_match('/^(DROP|SET|RESET)\s+/i', $type)) {
-            $type = 'TYPE ' . $this->getColumnType($type);
+        if (preg_match('/^(DROP|SET|RESET)\s+/i', $type)) {
+            return "ALTER TABLE {$tableName} ALTER COLUMN {$columnName} {$type}";
         }
 
-        return 'ALTER TABLE ' . $this->db->quoteTableName($table) . ' ALTER COLUMN '
-            . $this->db->quoteColumnName($column) . ' ' . $type;
+        $type = 'TYPE ' . $this->getColumnType($type);
+
+        $multiAlterStatement = [];
+        $constraintPrefix = preg_replace('/[^a-z0-9_]/i', '', $table . '_' . $column);
+
+        if (preg_match('/\s+DEFAULT\s+(["\']?\w*["\']?)/i', $type, $matches)) {
+            $type = preg_replace('/\s+DEFAULT\s+(["\']?\w*["\']?)/i', '', $type);
+            $multiAlterStatement[] = "ALTER COLUMN {$columnName} SET DEFAULT {$matches[1]}";
+        } else {
+            // safe to drop default even if there was none in the first place
+            $multiAlterStatement[] = "ALTER COLUMN {$columnName} DROP DEFAULT";
+        }
+
+        $type = preg_replace('/\s+NOT\s+NULL/i', '', $type, -1, $count);
+        if ($count) {
+            $multiAlterStatement[] = "ALTER COLUMN {$columnName} SET NOT NULL";
+        } else {
+            // remove additional null if any
+            $type = preg_replace('/\s+NULL/i', '', $type);
+            // safe to drop not null even if there was none in the first place
+            $multiAlterStatement[] = "ALTER COLUMN {$columnName} DROP NOT NULL";
+        }
+
+        if (preg_match('/\s+CHECK\s+\((.+)\)/i', $type, $matches)) {
+            $type = preg_replace('/\s+CHECK\s+\((.+)\)/i', '', $type);
+            $multiAlterStatement[] = "ADD CONSTRAINT {$constraintPrefix}_check CHECK ({$matches[1]})";
+        }
+
+        $type = preg_replace('/\s+UNIQUE/i', '', $type, -1, $count);
+        if ($count) {
+            $multiAlterStatement[] = "ADD UNIQUE ({$columnName})";
+        }
+
+        // add what's left at the beginning
+        array_unshift($multiAlterStatement, "ALTER COLUMN {$columnName} {$type}");
+
+        return 'ALTER TABLE ' . $tableName . ' ' . implode(', ', $multiAlterStatement);
     }
 
     /**
@@ -283,9 +334,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
     private function newUpsert($table, $insertColumns, $updateColumns, &$params)
     {
         $insertSql = $this->insert($table, $insertColumns, $params);
-        [$uniqueNames, , $updateNames] = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
+        list($uniqueNames, , $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns);
         if (empty($uniqueNames)) {
             return $insertSql;
+        }
+        if ($updateNames === []) {
+            // there are no columns to update
+            $updateColumns = false;
         }
 
         if ($updateColumns === false) {
@@ -298,7 +353,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $updateColumns[$name] = new Expression('EXCLUDED.' . $this->db->quoteColumnName($name));
             }
         }
-        [$updates, $params] = $this->prepareUpdateSets($table, $updateColumns, $params);
+        list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
         return $insertSql . ' ON CONFLICT (' . implode(', ', $uniqueNames) . ') DO UPDATE SET ' . implode(', ', $updates);
     }
 
@@ -313,9 +368,13 @@ class QueryBuilder extends \yii\db\QueryBuilder
     private function oldUpsert($table, $insertColumns, $updateColumns, &$params)
     {
         /** @var Constraint[] $constraints */
-        [$uniqueNames, $insertNames, $updateNames] = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
+        list($uniqueNames, $insertNames, $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
         if (empty($uniqueNames)) {
             return $this->insert($table, $insertColumns, $params);
+        }
+        if ($updateNames === []) {
+            // there are no columns to update
+            $updateColumns = false;
         }
 
         /** @var Schema $schema */
@@ -333,7 +392,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 }
             }
         }
-        [, $placeholders, $values, $params] = $this->prepareInsertValues($table, $insertColumns, $params);
+        list(, $placeholders, $values, $params) = $this->prepareInsertValues($table, $insertColumns, $params);
         $updateCondition = ['or'];
         $insertCondition = ['or'];
         $quotedTableName = $schema->quoteTableName($table);
@@ -373,7 +432,7 @@ class QueryBuilder extends \yii\db\QueryBuilder
                 $updateColumns[$name] = new Expression($quotedName);
             }
         }
-        [$updates, $params] = $this->prepareUpdateSets($table, $updateColumns, $params);
+        list($updates, $params) = $this->prepareUpdateSets($table, $updateColumns, $params);
         $updateSql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $updates)
             . ' FROM "EXCLUDED" ' . $this->buildWhere($updateCondition, $params)
             . ' RETURNING ' . $this->db->quoteTableName($table) .'.*';

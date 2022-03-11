@@ -23,7 +23,7 @@ use yii\base\InvalidConfigException;
  * {
  *     return [
  *         'compositeAuth' => [
- *             '__class' => \yii\filters\auth\CompositeAuth::class,
+ *             'class' => \yii\filters\auth\CompositeAuth::class,
  *             'authMethods' => [
  *                 \yii\filters\auth\HttpBasicAuth::class,
  *                 \yii\filters\auth\QueryParamAuth::class,

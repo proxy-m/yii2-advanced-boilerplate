@@ -29,9 +29,9 @@ class QueryBuilder extends \yii\db\QueryBuilder
      */
     public $typeMap = [
         Schema::TYPE_PK => 'integer PRIMARY KEY AUTOINCREMENT NOT NULL',
-        Schema::TYPE_UPK => 'integer UNSIGNED PRIMARY KEY AUTOINCREMENT NOT NULL',
+        Schema::TYPE_UPK => 'integer PRIMARY KEY AUTOINCREMENT NOT NULL',
         Schema::TYPE_BIGPK => 'integer PRIMARY KEY AUTOINCREMENT NOT NULL',
-        Schema::TYPE_UBIGPK => 'integer UNSIGNED PRIMARY KEY AUTOINCREMENT NOT NULL',
+        Schema::TYPE_UBIGPK => 'integer PRIMARY KEY AUTOINCREMENT NOT NULL',
         Schema::TYPE_CHAR => 'char(1)',
         Schema::TYPE_STRING => 'varchar(255)',
         Schema::TYPE_TEXT => 'text',
@@ -58,8 +58,8 @@ class QueryBuilder extends \yii\db\QueryBuilder
     protected function defaultExpressionBuilders()
     {
         return array_merge(parent::defaultExpressionBuilders(), [
-            \yii\db\conditions\LikeCondition::class => conditions\LikeConditionBuilder::class,
-            \yii\db\conditions\InCondition::class => conditions\InConditionBuilder::class,
+            'yii\db\conditions\LikeCondition' => 'yii\db\sqlite\conditions\LikeConditionBuilder',
+            'yii\db\conditions\InCondition' => 'yii\db\sqlite\conditions\InConditionBuilder',
         ]);
     }
 
@@ -70,12 +70,16 @@ class QueryBuilder extends \yii\db\QueryBuilder
     public function upsert($table, $insertColumns, $updateColumns, &$params)
     {
         /** @var Constraint[] $constraints */
-        [$uniqueNames, $insertNames, $updateNames] = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
+        list($uniqueNames, $insertNames, $updateNames) = $this->prepareUpsertColumns($table, $insertColumns, $updateColumns, $constraints);
         if (empty($uniqueNames)) {
             return $this->insert($table, $insertColumns, $params);
         }
+        if ($updateNames === []) {
+            // there are no columns to update
+            $updateColumns = false;
+        }
 
-        [, $placeholders, $values, $params] = $this->prepareInsertValues($table, $insertColumns, $params);
+        list(, $placeholders, $values, $params) = $this->prepareInsertValues($table, $insertColumns, $params);
         $insertSql = 'INSERT OR IGNORE INTO ' . $this->db->quoteTableName($table)
             . (!empty($insertNames) ? ' (' . implode(', ', $insertNames) . ')' : '')
             . (!empty($placeholders) ? ' VALUES (' . implode(', ', $placeholders) . ')' : $values);
@@ -489,16 +493,36 @@ class QueryBuilder extends \yii\db\QueryBuilder
             $this->buildFrom($query->from, $params),
             $this->buildJoin($query->join, $params),
             $this->buildWhere($query->where, $params),
-            $this->buildGroupBy($query->groupBy, $params),
+            $this->buildGroupBy($query->groupBy),
             $this->buildHaving($query->having, $params),
         ];
 
         $sql = implode($this->separator, array_filter($clauses));
-        $sql = $this->buildOrderByAndLimit($sql, $query->orderBy, $query->limit, $query->offset, $params);
+        $sql = $this->buildOrderByAndLimit($sql, $query->orderBy, $query->limit, $query->offset);
+
+        if (!empty($query->orderBy)) {
+            foreach ($query->orderBy as $expression) {
+                if ($expression instanceof ExpressionInterface) {
+                    $this->buildExpression($expression, $params);
+                }
+            }
+        }
+        if (!empty($query->groupBy)) {
+            foreach ($query->groupBy as $expression) {
+                if ($expression instanceof ExpressionInterface) {
+                    $this->buildExpression($expression, $params);
+                }
+            }
+        }
 
         $union = $this->buildUnion($query->union, $params);
         if ($union !== '') {
             $sql = "$sql{$this->separator}$union";
+        }
+
+        $with = $this->buildWithQueries($query->withQueries, $params);
+        if ($with !== '') {
+            $sql = "$with{$this->separator}$sql";
         }
 
         return [$sql, $params];
@@ -518,12 +542,30 @@ class QueryBuilder extends \yii\db\QueryBuilder
         foreach ($unions as $i => $union) {
             $query = $union['query'];
             if ($query instanceof Query) {
-                [$unions[$i]['query'], $params] = $this->build($query, $params);
+                list($unions[$i]['query'], $params) = $this->build($query, $params);
             }
 
             $result .= ' UNION ' . ($union['all'] ? 'ALL ' : '') . ' ' . $unions[$i]['query'];
         }
 
         return trim($result);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createIndex($name, $table, $columns, $unique = false)
+    {
+        $tableParts = explode('.', $table);
+
+        $schema = null;
+        if (count($tableParts) === 2) {
+            list ($schema, $table) = $tableParts;
+        }
+
+        return ($unique ? 'CREATE UNIQUE INDEX ' : 'CREATE INDEX ')
+            . $this->db->quoteTableName(($schema ? $schema . '.' : '') . $name) . ' ON '
+            . $this->db->quoteTableName($table)
+            . ' (' . $this->buildColumns($columns) . ')';
     }
 }

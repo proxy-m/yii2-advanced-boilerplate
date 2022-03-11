@@ -19,6 +19,17 @@ use yii\db\JsonExpression;
 class ColumnSchema extends \yii\db\ColumnSchema
 {
     /**
+     * @var bool whether the column schema should OMIT using JSON support feature.
+     * You can use this property to make upgrade to Yii 2.0.14 easier.
+     * Default to `false`, meaning JSON support is enabled.
+     *
+     * @since 2.0.14.1
+     * @deprecated Since 2.0.14.1 and will be removed in 2.1.
+     */
+    public $disableJsonSupport = false;
+
+
+    /**
      * {@inheritdoc}
      */
     public function dbTypecast($value)
@@ -31,7 +42,7 @@ class ColumnSchema extends \yii\db\ColumnSchema
             return $value;
         }
 
-        if ($this->dbType === Schema::TYPE_JSON) {
+        if (!$this->disableJsonSupport && $this->dbType === Schema::TYPE_JSON) {
             return new JsonExpression($value, $this->type);
         }
 
@@ -47,7 +58,7 @@ class ColumnSchema extends \yii\db\ColumnSchema
             return null;
         }
 
-        if ($this->type === Schema::TYPE_JSON) {
+        if (!$this->disableJsonSupport && $this->type === Schema::TYPE_JSON) {
             return json_decode($value, true);
         }
 

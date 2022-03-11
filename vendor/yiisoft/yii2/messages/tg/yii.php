@@ -23,6 +23,7 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Powered by {yii}' => 'Дар {yii} кор мекунад',
     'Unknown alias: -{name}' => 'Тахаллуси номаълум: -{name}',
     'Yii Framework' => 'Yii Framework',
     '(not set)' => '(супориш дода нашуд)',
@@ -115,7 +116,7 @@ return [
     '{nFormatted} B' => '{nFormatted} Б',
     '{nFormatted} GB' => '{nFormatted} ГБ',
     '{nFormatted} GiB' => '{nFormatted} ГиБ',
-    '{nFormatted} KB' => '{nFormatted} КБ',
+    '{nFormatted} kB' => '{nFormatted} КБ',
     '{nFormatted} KiB' => '{nFormatted} КиБ',
     '{nFormatted} MB' => '{nFormatted} МБ',
     '{nFormatted} MiB' => '{nFormatted} МиБ',

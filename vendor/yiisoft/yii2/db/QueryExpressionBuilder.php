@@ -29,7 +29,7 @@ class QueryExpressionBuilder implements ExpressionBuilderInterface
      */
     public function build(ExpressionInterface $expression, array &$params = [])
     {
-        [$sql, $params] = $this->queryBuilder->build($expression, $params);
+        list($sql, $params) = $this->queryBuilder->build($expression, $params);
 
         return "($sql)";
     }

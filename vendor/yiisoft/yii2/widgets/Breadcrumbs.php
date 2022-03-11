@@ -126,12 +126,11 @@ class Breadcrumbs extends Widget
 
     /**
      * Renders the widget.
-     * @return string the result of widget execution to be outputted.
      */
     public function run()
     {
         if (empty($this->links)) {
-            return '';
+            return;
         }
         $links = [];
         if ($this->homeLink === null) {
@@ -148,7 +147,7 @@ class Breadcrumbs extends Widget
             }
             $links[] = $this->renderItem($link, isset($link['url']) ? $this->itemTemplate : $this->activeItemTemplate);
         }
-        return Html::tag($this->tag, implode('', $links), $this->options);
+        echo Html::tag($this->tag, implode('', $links), $this->options);
     }
 
     /**

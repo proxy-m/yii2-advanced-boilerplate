@@ -16,12 +16,12 @@ use yii\helpers\Url;
  *
  * For more details and usage information on Application, see the [guide article on applications](guide:structure-applications).
  *
- * @property ErrorHandler $errorHandler The error handler application component. This property is read-only.
+ * @property-read ErrorHandler $errorHandler The error handler application component.
  * @property string $homeUrl The homepage URL.
- * @property Request $request The request component. This property is read-only.
- * @property Response $response The response component. This property is read-only.
- * @property Session $session The session component. This property is read-only.
- * @property User $user The user component. This property is read-only.
+ * @property-read Request $request The request component.
+ * @property-read Response $response The response component.
+ * @property-read Session $session The session component.
+ * @property-read User $user The user component.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -79,7 +79,7 @@ class Application extends \yii\base\Application
     {
         if (empty($this->catchAll)) {
             try {
-                [$route, $params] = $request->resolve();
+                list($route, $params) = $request->resolve();
             } catch (UrlNormalizerRedirectException $e) {
                 $url = $e->url;
                 if (is_array($url)) {
@@ -193,11 +193,11 @@ class Application extends \yii\base\Application
     public function coreComponents()
     {
         return array_merge(parent::coreComponents(), [
-            'request' => ['__class' => Request::class],
-            'response' => ['__class' => Response::class],
-            'session' => ['__class' => Session::class],
-            'user' => ['__class' => User::class],
-            'errorHandler' => ['__class' => ErrorHandler::class],
+            'request' => ['class' => 'yii\web\Request'],
+            'response' => ['class' => 'yii\web\Response'],
+            'session' => ['class' => 'yii\web\Session'],
+            'user' => ['class' => 'yii\web\User'],
+            'errorHandler' => ['class' => 'yii\web\ErrorHandler'],
         ]);
     }
 }

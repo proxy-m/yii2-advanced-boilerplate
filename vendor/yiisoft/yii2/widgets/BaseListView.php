@@ -142,7 +142,7 @@ abstract class BaseListView extends Widget
 
         $options = $this->options;
         $tag = ArrayHelper::remove($options, 'tag', 'div');
-        return Html::tag($tag, $content, $options);
+        echo Html::tag($tag, $content, $options);
     }
 
     /**
@@ -227,14 +227,18 @@ abstract class BaseListView extends Widget
             }
         }
 
-        return Yii::$app->getI18n()->format($summaryContent, [
+        if ($summaryContent === '') {
+            return '';
+        }
+
+        return Html::tag($tag, Yii::$app->getI18n()->format($summaryContent, [
             'begin' => $begin,
             'end' => $end,
             'count' => $count,
             'totalCount' => $totalCount,
             'page' => $page,
             'pageCount' => $pageCount,
-        ], Yii::$app->language);
+        ], Yii::$app->language), $summaryOptions);
     }
 
     /**
@@ -249,7 +253,7 @@ abstract class BaseListView extends Widget
         }
         /* @var $class LinkPager */
         $pager = $this->pager;
-        $class = ArrayHelper::remove($pager, '__class', LinkPager::class);
+        $class = ArrayHelper::remove($pager, 'class', LinkPager::className());
         $pager['pagination'] = $pagination;
         $pager['view'] = $this->getView();
 
@@ -268,7 +272,7 @@ abstract class BaseListView extends Widget
         }
         /* @var $class LinkSorter */
         $sorter = $this->sorter;
-        $class = ArrayHelper::remove($sorter, '__class', LinkSorter::class);
+        $class = ArrayHelper::remove($sorter, 'class', LinkSorter::className());
         $sorter['sort'] = $sort;
         $sorter['view'] = $this->getView();
 

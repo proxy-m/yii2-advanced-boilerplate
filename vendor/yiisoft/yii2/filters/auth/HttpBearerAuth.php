@@ -17,7 +17,7 @@ namespace yii\filters\auth;
  * {
  *     return [
  *         'bearerAuth' => [
- *             '__class' => \yii\filters\auth\HttpBearerAuth::class,
+ *             'class' => \yii\filters\auth\HttpBearerAuth::class,
  *         ],
  *     ];
  * }
@@ -47,6 +47,6 @@ class HttpBearerAuth extends HttpHeaderAuth
      */
     public function challenge($response)
     {
-        $response->setHeader('WWW-Authenticate', "Bearer realm=\"{$this->realm}\"");
+        $response->getHeaders()->set('WWW-Authenticate', "Bearer realm=\"{$this->realm}\"");
     }
 }

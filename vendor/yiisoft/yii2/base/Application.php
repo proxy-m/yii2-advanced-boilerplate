@@ -14,35 +14,32 @@ use Yii;
  *
  * For more details and usage information on Application, see the [guide article on applications](guide:structure-applications).
  *
- * @property \yii\web\AssetManager $assetManager The asset manager application component. This property is
- * read-only.
- * @property \yii\rbac\ManagerInterface $authManager The auth manager application component. Null is returned
- * if auth manager is not configured. This property is read-only.
+ * @property-read \yii\web\AssetManager $assetManager The asset manager application component.
+ * @property-read \yii\rbac\ManagerInterface|null $authManager The auth manager application component or null
+ * if it's not configured.
  * @property string $basePath The root directory of the application.
- * @property \yii\caching\CacheInterface $cache The cache application component. Null if the component is not
- * enabled. This property is read-only.
- * @property array $container Values given in terms of name-value pairs. This property is write-only.
- * @property \yii\db\Connection $db The database connection. This property is read-only.
- * @property \yii\web\ErrorHandler|\yii\console\ErrorHandler $errorHandler The error handler application
- * component. This property is read-only.
- * @property \yii\i18n\Formatter $formatter The formatter application component. This property is read-only.
- * @property \yii\i18n\I18N $i18n The internationalization application component. This property is read-only.
- * @property \psr\log\LoggerInterface $logger The logger.
- * @property \yii\profile\ProfilerInterface $profiler The profiler.
- * @property \yii\mail\MailerInterface $mailer The mailer application component. This property is read-only.
- * @property \yii\web\Request|\yii\console\Request $request The request component. This property is read-only.
- * @property \yii\web\Response|\yii\console\Response $response The response component. This property is
- * read-only.
+ * @property-read \yii\caching\CacheInterface $cache The cache application component. Null if the component is
+ * not enabled.
+ * @property-write array $container Values given in terms of name-value pairs.
+ * @property-read \yii\db\Connection $db The database connection.
+ * @property-read \yii\web\ErrorHandler|\yii\console\ErrorHandler $errorHandler The error handler application
+ * component.
+ * @property-read \yii\i18n\Formatter $formatter The formatter application component.
+ * @property-read \yii\i18n\I18N $i18n The internationalization application component.
+ * @property-read \yii\log\Dispatcher $log The log dispatcher application component.
+ * @property-read \yii\mail\MailerInterface $mailer The mailer application component.
+ * @property-read \yii\web\Request|\yii\console\Request $request The request component.
+ * @property-read \yii\web\Response|\yii\console\Response $response The response component.
  * @property string $runtimePath The directory that stores runtime files. Defaults to the "runtime"
  * subdirectory under [[basePath]].
- * @property \yii\base\Security $security The security application component. This property is read-only.
+ * @property-read \yii\base\Security $security The security application component.
  * @property string $timeZone The time zone used by this application.
- * @property string $uniqueId The unique ID of the module. This property is read-only.
- * @property \yii\web\UrlManager $urlManager The URL manager for this application. This property is read-only.
+ * @property-read string $uniqueId The unique ID of the module.
+ * @property-read \yii\web\UrlManager $urlManager The URL manager for this application.
  * @property string $vendorPath The directory that stores vendor files. Defaults to "vendor" directory under
  * [[basePath]].
- * @property View|\yii\web\View $view The view application component that is used to render various view
- * files. This property is read-only.
+ * @property-read View|\yii\web\View $view The view application component that is used to render various view
+ * files.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -245,29 +242,22 @@ abstract class Application extends Module
         if (isset($config['timeZone'])) {
             $this->setTimeZone($config['timeZone']);
             unset($config['timeZone']);
+        } elseif (!ini_get('date.timezone')) {
+            $this->setTimeZone('UTC');
         }
 
         if (isset($config['container'])) {
             $this->setContainer($config['container']);
+
             unset($config['container']);
-        }
-
-        if (isset($config['logger'])) {
-            $this->setLogger($config['logger']);
-            unset($config['logger']);
-        }
-
-        if (isset($config['profiler'])) {
-            $this->setProfiler($config['profiler']);
-            unset($config['profiler']);
         }
 
         // merge core components with custom components
         foreach ($this->coreComponents() as $id => $component) {
             if (!isset($config['components'][$id])) {
                 $config['components'][$id] = $component;
-            } elseif (is_array($config['components'][$id]) && !isset($config['components'][$id]['__class'])) {
-                $config['components'][$id]['__class'] = $component['__class'];
+            } elseif (is_array($config['components'][$id]) && !isset($config['components'][$id]['class'])) {
+                $config['components'][$id]['class'] = $component['class'];
             }
         }
     }
@@ -346,7 +336,7 @@ abstract class Application extends Module
     protected function registerErrorHandler(&$config)
     {
         if (YII_ENABLE_ERROR_HANDLER) {
-            if (!isset($config['components']['errorHandler']['__class'])) {
+            if (!isset($config['components']['errorHandler']['class'])) {
                 echo "Error: no errorHandler component is configured.\n";
                 exit(1);
             }
@@ -403,7 +393,7 @@ abstract class Application extends Module
 
             return $response->exitStatus;
         } catch (ExitException $e) {
-            $this->end($e->statusCode, $response ?? null);
+            $this->end($e->statusCode, isset($response) ? $response : null);
             return $e->statusCode;
         }
     }
@@ -479,7 +469,7 @@ abstract class Application extends Module
      * If time zone is not configured in php.ini or application config,
      * it will be set to UTC by default.
      * @return string the time zone used by this application.
-     * @see http://php.net/manual/en/function.date-default-timezone-get.php
+     * @see https://www.php.net/manual/en/function.date-default-timezone-get.php
      */
     public function getTimeZone()
     {
@@ -489,9 +479,9 @@ abstract class Application extends Module
     /**
      * Sets the time zone used by this application.
      * This is a simple wrapper of PHP function date_default_timezone_set().
-     * Refer to the [php manual](http://www.php.net/manual/en/timezones.php) for available timezones.
+     * Refer to the [php manual](https://www.php.net/manual/en/timezones.php) for available timezones.
      * @param string $value the time zone used by this application.
-     * @see http://php.net/manual/en/function.date-default-timezone-set.php
+     * @see https://www.php.net/manual/en/function.date-default-timezone-set.php
      */
     public function setTimeZone($value)
     {
@@ -508,43 +498,12 @@ abstract class Application extends Module
     }
 
     /**
-     * Sets up or configure the logger instance.
-     * @param \psr\log\LoggerInterface|\Closure|array|null $logger the logger object or its DI compatible configuration.
-     * @since 3.0.0
+     * Returns the log dispatcher component.
+     * @return \yii\log\Dispatcher the log dispatcher application component.
      */
-    public function setLogger($logger)
+    public function getLog()
     {
-        Yii::setLogger($logger);
-    }
-
-    /**
-     * Returns the logger instance.
-     * @return \psr\log\LoggerInterface the logger instance.
-     * @since 3.0.0
-     */
-    public function getLogger()
-    {
-        return Yii::getLogger();
-    }
-
-    /**
-     * Sets up or configure the profiler instance.
-     * @param \yii\profile\ProfilerInterface|\Closure|array|null $profiler the profiler object or its DI compatible configuration.
-     * @since 3.0.0
-     */
-    public function setProfiler($profiler)
-    {
-        Yii::setProfiler($profiler);
-    }
-
-    /**
-     * Returns the profiler instance.
-     * @return \yii\profile\ProfilerInterface profiler instance.
-     * @since 3.0.0
-     */
-    public function getProfiler()
-    {
-        return Yii::getProfiler();
+        return $this->get('log');
     }
 
     /**
@@ -622,6 +581,7 @@ abstract class Application extends Module
     /**
      * Returns the mailer component.
      * @return \yii\mail\MailerInterface the mailer application component.
+     * @throws InvalidConfigException If this component is not configured.
      */
     public function getMailer()
     {
@@ -630,8 +590,7 @@ abstract class Application extends Module
 
     /**
      * Returns the auth manager for this application.
-     * @return \yii\rbac\ManagerInterface the auth manager application component.
-     * Null is returned if auth manager is not configured.
+     * @return \yii\rbac\ManagerInterface|null the auth manager application component or null if it's not configured.
      */
     public function getAuthManager()
     {
@@ -658,19 +617,25 @@ abstract class Application extends Module
 
     /**
      * Returns the configuration of core application components.
+     * @return array
      * @see set()
      */
     public function coreComponents()
     {
-        return [
-            'security' => ['__class' => Security::class],
-            'formatter' => ['__class' => \yii\i18n\Formatter::class],
-            'i18n' => ['__class' => \yii\i18n\I18N::class],
-            'mailer' => ['__class' => \yii\swiftmailer\Mailer::class],
-            'assetManager' => ['__class' => \yii\web\AssetManager::class],
-            'urlManager' => ['__class' => \yii\web\UrlManager::class],
-            'view' => ['__class' => \yii\web\View::class],
+        $components = [
+            'log' => ['class' => 'yii\log\Dispatcher'],
+            'view' => ['class' => 'yii\web\View'],
+            'formatter' => ['class' => 'yii\i18n\Formatter'],
+            'i18n' => ['class' => 'yii\i18n\I18N'],
+            'urlManager' => ['class' => 'yii\web\UrlManager'],
+            'assetManager' => ['class' => 'yii\web\AssetManager'],
+            'security' => ['class' => 'yii\base\Security'],
         ];
+        if (class_exists('yii\swiftmailer\Mailer')) {
+            $components['mailer'] = ['class' => 'yii\swiftmailer\Mailer'];
+        }
+
+        return $components;
     }
 
     /**

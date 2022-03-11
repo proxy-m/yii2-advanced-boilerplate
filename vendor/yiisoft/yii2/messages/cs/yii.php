@@ -24,6 +24,7 @@
  */
 return [
     ' and ' => ' a ',
+    'Powered by {yii}' => 'Běží na {yii}',
     'The combination {values} of {attributes} has already been taken.' => 'Kombinace {values} pro {attributes} je již použitá.',
     'Unknown alias: -{name}' => 'Neznámý alias: -{name}',
     'Yii Framework' => 'Yii Framework',
@@ -49,7 +50,7 @@ return [
     '{nFormatted} B' => '{nFormatted} B',
     '{nFormatted} GB' => '{nFormatted} GB',
     '{nFormatted} GiB' => '{nFormatted} GiB',
-    '{nFormatted} KB' => '{nFormatted} KB',
+    '{nFormatted} kB' => '{nFormatted} kB',
     '{nFormatted} KiB' => '{nFormatted} KiB',
     '{nFormatted} MB' => '{nFormatted} MB',
     '{nFormatted} MiB' => '{nFormatted} MiB',

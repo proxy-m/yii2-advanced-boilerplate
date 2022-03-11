@@ -24,7 +24,7 @@ use yii\base\UserException;
  * public function actions()
  * {
  *     return [
- *         'error' => ['__class' => \yii\web\ErrorAction::class,
+ *         'error' => ['class' => 'yii\web\ErrorAction'],
  *     ];
  * }
  * ```
@@ -76,7 +76,7 @@ class ErrorAction extends Action
 
     /**
      * @var \Exception the exception object, normally is filled on [[init()]] method call.
-     * @see [[findException()]] to know default way of obtaining exception.
+     * @see findException() to know default way of obtaining exception.
      * @since 2.0.11
      */
     protected $exception;

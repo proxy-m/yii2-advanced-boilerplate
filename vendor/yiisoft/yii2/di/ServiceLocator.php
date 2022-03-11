@@ -26,11 +26,11 @@ use yii\base\InvalidConfigException;
  * $locator = new \yii\di\ServiceLocator;
  * $locator->setComponents([
  *     'db' => [
- *         '__class' => \yii\db\Connection::class,
+ *         'class' => 'yii\db\Connection',
  *         'dsn' => 'sqlite:path/to/file.db',
  *     ],
  *     'cache' => [
- *         '__class' => \yii\caching\DbCache::class,
+ *         'class' => 'yii\caching\DbCache',
  *         'db' => 'db',
  *     ],
  * ]);
@@ -149,11 +149,11 @@ class ServiceLocator extends Component
      *
      * ```php
      * // a class name
-     * $locator->set('cache', \yii\caching\FileCache::class);
+     * $locator->set('cache', 'yii\caching\FileCache');
      *
      * // a configuration array
      * $locator->set('db', [
-     *     '__class' => \yii\db\Connection::class,
+     *     'class' => 'yii\db\Connection',
      *     'dsn' => 'mysql:host=127.0.0.1;dbname=demo',
      *     'username' => 'root',
      *     'password' => '',
@@ -199,11 +199,14 @@ class ServiceLocator extends Component
             $this->_definitions[$id] = $definition;
         } elseif (is_array($definition)) {
             // a configuration array
-            if (isset($definition['__class']) || isset($definition['class'])) {
-                // @todo remove fallback
+            if (isset($definition['__class'])) {
+                $this->_definitions[$id] = $definition;
+                $this->_definitions[$id]['class'] = $definition['__class'];
+                unset($this->_definitions[$id]['__class']);
+            } elseif (isset($definition['class'])) {
                 $this->_definitions[$id] = $definition;
             } else {
-                throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"__class\" element.");
+                throw new InvalidConfigException("The configuration for the \"$id\" component must contain a \"class\" element.");
             }
         } else {
             throw new InvalidConfigException("Unexpected configuration type for the \"$id\" component: " . gettype($definition));
@@ -244,11 +247,11 @@ class ServiceLocator extends Component
      * ```php
      * [
      *     'db' => [
-     *         '__class' => \yii\db\Connection::class,
+     *         'class' => 'yii\db\Connection',
      *         'dsn' => 'sqlite:path/to/file.db',
      *     ],
      *     'cache' => [
-     *         '__class' => \yii\caching\DbCache::class,
+     *         'class' => 'yii\caching\DbCache',
      *         'db' => 'db',
      *     ],
      * ]

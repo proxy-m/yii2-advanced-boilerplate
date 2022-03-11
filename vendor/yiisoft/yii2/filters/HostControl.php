@@ -23,7 +23,7 @@ use yii\web\NotFoundHttpException;
  * ```php
  * return [
  *     'as hostControl' => [
- *         '__class' => \yii\filters\HostControl::class,
+ *         'class' => 'yii\filters\HostControl',
  *         'allowedHosts' => [
  *             'example.com',
  *             '*.example.com',
@@ -45,7 +45,7 @@ use yii\web\NotFoundHttpException;
  *     {
  *         return [
  *             'hostControl' => [
- *                 '__class' => HostControl::class,
+ *                 'class' => HostControl::class,
  *                 'allowedHosts' => [
  *                     'example.com',
  *                     '*.example.com',

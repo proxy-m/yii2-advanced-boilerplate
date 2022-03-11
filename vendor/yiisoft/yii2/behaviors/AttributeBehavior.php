@@ -28,7 +28,7 @@ use yii\db\ActiveRecord;
  * {
  *     return [
  *         [
- *             '__class' => AttributeBehavior::class,
+ *             'class' => AttributeBehavior::class,
  *             'attributes' => [
  *                 ActiveRecord::EVENT_BEFORE_INSERT => 'attribute1',
  *                 ActiveRecord::EVENT_BEFORE_UPDATE => 'attribute2',
